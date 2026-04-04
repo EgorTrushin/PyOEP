@@ -32,6 +32,9 @@ def cc_rrdm1(cc_grad, t1=None, t2=None, l1=None, l2=None, eris=None, atmlst=None
     if l2 is None:
         l2 = mycc.l2
 
+    if l1 is None or l2 is None:
+        l1, l2 = mycc.solve_lambda(t1, t2)
+
     if d1 is None:
         d1 = ccsd_rdm._gamma1_intermediates(mycc, t1, t2, l1, l2)
     doo, dov, dvo, dvv = d1
