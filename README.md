@@ -62,7 +62,7 @@ Three brief examples are provided below. More detailed examples with discussion 
 import matplotlib.pyplot as plt
 from pyscf import scf, gto
 from methods.exxoep import EXXOEP
-from utils.eval_pot import eval_pot
+from utils.coulomb_potential_on_grid import coulomb_potential_on_grid
 from utils.gen_coords_1d import gen_coords_1d
 
 # Three separate basis sets are used:
@@ -93,9 +93,10 @@ print(f"LUMO-HOMO: {mf_oep.mf.mo_energy[mf_oep.nelec]-mf_oep.mf.mo_energy[mf_oep
 
 # Evaluate the converged potentials on a 1D grid along the molecular axis
 coords = gen_coords_1d(-5.0, 5.0, 1000)
-vrest_on_grid = eval_pot(mf_oep.pmol, coords, mf_oep.vrest_oep)
-vref_on_grid  = eval_pot(mf_oep.pmol, coords, mf_oep.vref_oep)
-vx_on_grid    = eval_pot(mf_oep.pmol, coords, mf_oep.vrest_oep + mf_oep.vref_oep)
+vcoul_on_grid = coulomb_potential_on_grid(mf_oep.pmol, coords)
+vrest_on_grid = vcoul_on_grid @ mf_oep.vrest_oep
+vref_on_grid  = vcoul_on_grid @ mf_oep.vref_oep
+vx_on_grid    = vcoul_on_grid @ (mf_oep.vrest_oep + mf_oep.vref_oep)
 
 # vref is the Fermi-Amaldi reference potential; vrest is the remainder;
 # their sum is the total EXX exchange potential
@@ -115,7 +116,7 @@ plt.show()
 import matplotlib.pyplot as plt
 from pyscf import dft, gto
 from methods.dftoep import DFTOEP
-from utils.eval_pot import eval_pot
+from utils.coulomb_potential_on_grid import coulomb_potential_on_grid
 from utils.gen_coords_1d import gen_coords_1d
 
 ORBITAL_BASIS = "aug-cc-pwCVQZ"
@@ -146,9 +147,10 @@ print(f"LUMO-HOMO: {mf_oep.mf.mo_energy[mf_oep.nelec]-mf_oep.mf.mo_energy[mf_oep
 # vref is the Fermi-Amaldi reference potential, vrest is the remainder,
 # their sum is the total xc OEP potential
 coords = gen_coords_1d(-5.0, 5.0, 1000)
-vrest_on_grid = eval_pot(mf_oep.pmol, coords, mf_oep.vrest_oep)
-vref_on_grid  = eval_pot(mf_oep.pmol, coords, mf_oep.vref_oep)
-vxc_on_grid   = eval_pot(mf_oep.pmol, coords, mf_oep.vrest_oep + mf_oep.vref_oep)
+vcoul_on_grid = coulomb_potential_on_grid(mf_oep.pmol, coords)
+vrest_on_grid = vcoul_on_grid @ mf_oep.vrest_oep
+vref_on_grid  = vcoul_on_grid @ mf_oep.vref_oep
+vxc_on_grid   = vcoul_on_grid @ (mf_oep.vrest_oep + mf_oep.vref_oep)
 
 plt.plot(coords[:, 2], vref_on_grid,  color="orangered",  label="$v_{xc}^{ref}$")
 plt.plot(coords[:, 2], vrest_on_grid, color="dodgerblue", label="$v_{xc}^{rest}$")
@@ -169,7 +171,7 @@ import matplotlib.pyplot as plt
 from pyscf import scf, gto, cc
 from methods.ksinv import KSINV
 from utils.relaxed_ccsd import cc_rrdm1
-from utils.eval_pot import eval_pot
+from utils.coulomb_potential_on_grid import coulomb_potential_on_grid
 from utils.gen_coords_1d import gen_coords_1d
 
 ORBITAL_BASIS = "aug-cc-pwCVTZ"
@@ -197,7 +199,8 @@ mf_inv.run(maxit=100, thr_fai_oep=5e-2)
 
 # Evaluate and plot the total xc potential on a 1D grid along the molecular axis
 coords = gen_coords_1d(-15.0, 15.0, 1000)
-vxc_on_grid = eval_pot(mf_inv.pmol, coords, mf_inv.vrest_oep + mf_inv.vref_oep)
+vcoul_on_grid = coulomb_potential_on_grid(mf_inv.pmol, coords)
+vxc_on_grid = vcoul_on_grid @ (mf_inv.vrest_oep + mf_inv.vref_oep)
 
 plt.plot(coords[:, 2], vxc_on_grid, color="orangered", label="$v_{xc}$")
 plt.xlim(-5, 5)
