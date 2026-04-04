@@ -29,6 +29,8 @@ pip install pytest
 
 To make the `methods/` and `utils/` packages importable, either run scripts from the project root or add the project root to `PYTHONPATH`.
 
+**Performance note:** Using an Intel Python distribution with MKL (e.g. via `conda install -c intel intelpython3_core`) is strongly recommended over the standard OpenBLAS-based NumPy/SciPy. MKL-accelerated linear algebra routines can provide a substantial speedup for the matrix operations used throughout PyOEP.
+
 ## Class overview
 
 | Class | File | Method | System |
