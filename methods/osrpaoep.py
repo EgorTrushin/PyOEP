@@ -3,7 +3,6 @@
 import scipy
 import numpy as np
 from pyscf import dft, gto, df, lib
-from pyscf.scf.diis import CDIIS
 from pyscf.gw.rpa import _get_scaled_legendre_roots
 from .osexxoep import OSEXXOEP
 from .rpaoep import RPAOEP
@@ -75,13 +74,13 @@ class OSRPAOEP(OSEXXOEP):
         if linear_mixing > 0:
             fock_old_a, fock_old_b = None, None
         else:
-            adiis_a = CDIIS()
-            adiis_b = CDIIS()
+            adiis = lib.diis.DIIS()
 
         e_tot_old = None
 
         print("ITER" + " " * 8 + "ENERGY" + " " * 12 + "EDIFF" + " " * 13 + "E_CORR")
         for current_iter in range(maxit):
+
             ints_3c_a = self.mf.mo_coeff[0].T @ self.ints_3c_ao @ self.mf.mo_coeff[0]
             ints_3c_b = self.mf.mo_coeff[1].T @ self.ints_3c_ao @ self.mf.mo_coeff[1]
             z_a = z_b = None
@@ -254,8 +253,15 @@ class OSRPAOEP(OSEXXOEP):
                 S = self.mf.get_ovlp()
                 D_a = self.mf.mo_coeff[0][:, :self.nelec[0]] @ self.mf.mo_coeff[0][:, :self.nelec[0]].T
                 D_b = self.mf.mo_coeff[1][:, :self.nelec[1]] @ self.mf.mo_coeff[1][:, :self.nelec[1]].T
-                F_a = adiis_a.update(S, D_a, F_a)
-                F_b = adiis_b.update(S, D_b, F_b)
+                e_a = F_a @ D_a @ S - S @ D_a @ F_a
+                e_b = F_b @ D_b @ S - S @ D_b @ F_b
+                nao = F_a.shape[0]
+                F_combined = adiis.update(
+                    np.concatenate([F_a.ravel(), F_b.ravel()]),
+                    xerr=np.concatenate([e_a.ravel(), e_b.ravel()])
+                )
+                F_a = F_combined[:nao * nao].reshape(nao, nao)
+                F_b = F_combined[nao * nao:].reshape(nao, nao)
 
             S = self.mf.get_ovlp()
             mo_energy, mo_coeff = scipy.linalg.eigh(F_a, S)
