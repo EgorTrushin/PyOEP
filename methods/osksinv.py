@@ -296,6 +296,7 @@ class OSKSINV(KSINV):
             )
             if converged:
                 print("KS inversion converged")
+                self.converged = True
                 print()
                 print(f"Total energy:           {e_tot:18.12f}")
                 print(f"One-electron energy:    {e1:18.12f}")

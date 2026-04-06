@@ -200,6 +200,7 @@ class RPAOEP(EXXOEP):
                 print(f"{current_iter:3}  {self.e_tot:18.12f}  {ediff:18.12f}  {self.E_corr:14.8f}")
                 if abs(e_tot_old - self.e_tot) < e_conv_thr:
                     print("SCF converged")
+                    self.converged = True
                     self.vref_oep = vref_oep
                     self.vrest_oep = vrest_oep
                     self.vrest_c_oep = vrest_c_oep

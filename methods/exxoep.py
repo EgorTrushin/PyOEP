@@ -50,6 +50,7 @@ class EXXOEP:
         self.build_pmol_and_grid()
         self.get_WII()
         self.get_y_and_yII()
+        self.converged = False
 
     def run(self, maxit=50, thr_fai_oep=5e-2, linear_mixing=-1.0, e_conv_thr=1e-8):
         r"""
@@ -132,6 +133,7 @@ class EXXOEP:
                 print(f"{current_iter:3}  {self.e_tot:18.12f}  {self.e_tot - e_tot_old:18.12f}")
                 if abs(e_tot_old - self.e_tot) < e_conv_thr:
                     print("SCF converged")
+                    self.converged = True
                     self.vref_oep = vref_oep
                     self.vrest_oep = vrest_oep
                     break

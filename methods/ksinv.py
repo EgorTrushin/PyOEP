@@ -148,6 +148,7 @@ class KSINV(EXXOEP):
             print(f"{current_iter:3}  {e_tot:18.12f}    {delta_rhs:.3e}    {mixing:.3e}")
             if abs(delta_rhs) < conv_thr:
                 print("KS inversion converged")
+                self.converged = True
                 print()
                 print(f"Total energy:           {e_tot:18.12f}")
                 print(f"One-electron energy:    {e1:18.12f}")
