@@ -64,8 +64,8 @@ class OSKSINV(KSINV):
         vj_ao_ref, vxnl_ao_ref = self.mf.get_jk(dm=np.asarray(self.dm_ref))
         vj_ao_ref = vj_ao_ref[0] + vj_ao_ref[1]
         e_coul_ref = np.einsum("ij,ji->", vj_ao_ref, self.dm_ref[0] + self.dm_ref[1]) * 0.5
-        e_x_ref = -0.5 * np.einsum("ij,ji->", vxnl_ao_ref[0], self.dm_ref[0]) * 0.5
-        e_x_ref += -0.5 * np.einsum("ij,ji->", vxnl_ao_ref[1], self.dm_ref[1]) * 0.5
+        e_x_ref = -0.5 * np.einsum("ij,ji->", vxnl_ao_ref[0], self.dm_ref[0])
+        e_x_ref += -0.5 * np.einsum("ij,ji->", vxnl_ao_ref[1], self.dm_ref[1])
         e_ee_ref = self.e_ref - e1 - self.mf.energy_nuc()
 
         aux = self.dm_ref[0] @ self.ints_3c_ao
@@ -128,8 +128,8 @@ class OSKSINV(KSINV):
             vj_ao, vxnl_ao = self.mf.get_jk(dm=np.asarray(dm))
             vj_ao = vj_ao[0] + vj_ao[1]
             e_coul = np.einsum("ij,ji->", vj_ao, dm[0] + dm[1]) * 0.5
-            e_x = -0.5 * np.einsum("ij,ji->", vxnl_ao[0], dm[0]) * 0.5
-            e_x += -0.5 * np.einsum("ij,ji->", vxnl_ao[1], dm[1]) * 0.5
+            e_x = -0.5 * np.einsum("ij,ji->", vxnl_ao[0], dm[0])
+            e_x += -0.5 * np.einsum("ij,ji->", vxnl_ao[1], dm[1])
 
             t_c = e_kin_ref - e_kin
             v_c = e_ee_ref - e_coul - e_x
