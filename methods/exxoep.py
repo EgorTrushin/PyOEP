@@ -45,7 +45,8 @@ class EXXOEP:
         self.space_sym = space_sym
         self.auxmol = df.addons.make_auxmol(self.mf.mol, self.oep_basis)
         self.ints_3c_ao = df.incore.aux_e2(self.mf.mol, self.auxmol, intor="int3c2e").transpose(2, 1, 0)
-        self.naux, self.nmo, _ = self.ints_3c_ao.shape
+        self.naux = self.ints_3c_ao.shape[0]
+        self.nmo = self.mf.mo_coeff.shape[-1]
         self.ints_3c_ao_t = self.ints_3c_ao.transpose(1, 2, 0)
         self.build_pmol_and_grid()
         self.get_WII()
