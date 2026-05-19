@@ -264,9 +264,9 @@ class OSRPAOEP(OSEXXOEP):
                 F_b = F_combined[nao * nao:].reshape(nao, nao)
 
             S = self.mf.get_ovlp()
-            mo_energy, mo_coeff = scipy.linalg.eigh(F_a, S)
+            mo_energy, mo_coeff = self.mf._eigh(F_a, S)
             self.mf.mo_energy[0], self.mf.mo_coeff[0] = mo_energy, mo_coeff
-            mo_energy, mo_coeff = scipy.linalg.eigh(F_b, S)
+            mo_energy, mo_coeff = self.mf._eigh(F_b, S)
             self.mf.mo_energy[1], self.mf.mo_coeff[1] = mo_energy, mo_coeff
 
             self.get_energies_and_potentials()

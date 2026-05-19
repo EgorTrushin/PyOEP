@@ -188,7 +188,7 @@ class RPAOEP(EXXOEP):
                 F = adiis.update(S, D, F)
 
             S = self.mf.get_ovlp()
-            self.mf.mo_energy, self.mf.mo_coeff = scipy.linalg.eigh(F, S)
+            self.mf.mo_energy, self.mf.mo_coeff = self.mf._eigh(F, S)
 
             self.get_energies_and_potentials()
 

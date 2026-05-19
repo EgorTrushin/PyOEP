@@ -46,12 +46,25 @@ class EXXOEP:
         self.auxmol = df.addons.make_auxmol(self.mf.mol, self.oep_basis)
         self.ints_3c_ao = df.incore.aux_e2(self.mf.mol, self.auxmol, intor="int3c2e").transpose(2, 1, 0)
         self.naux = self.ints_3c_ao.shape[0]
+        # nmo can be smaller than nao when PySCF drops linearly-dependent MOs during canonical orthogonalization
         self.nmo = self.mf.mo_coeff.shape[-1]
+        S = self.mf.get_ovlp()
+        e_S, v_S = scipy.linalg.eigh(S)
+        self.X_lindep = v_S[:, -self.nmo:] / np.sqrt(e_S[-self.nmo:])
+        self.mf._eigh = self._eigh_canorth
         self.ints_3c_ao_t = self.ints_3c_ao.transpose(1, 2, 0)
         self.build_pmol_and_grid()
         self.get_WII()
         self.get_y_and_yII()
         self.converged = False
+
+    def _eigh_canorth(self, h, s):
+        """Canonical-orth-aware replacement for mf._eigh, ensuring Fock-diagonalization
+        outputs lie in the same nmo-dim lindep-free subspace as the initial mf.mo_coeff."""
+        X = self.X_lindep
+        h_orth = X.T @ h @ X
+        e, c = scipy.linalg.eigh(h_orth)
+        return e, X @ c
 
     def run(self, maxit=50, thr_fai_oep=5e-2, linear_mixing=-1.0, e_conv_thr=1e-8):
         r"""
@@ -123,7 +136,7 @@ class EXXOEP:
                 F = adiis.update(F)
 
             S = self.mf.get_ovlp()
-            self.mf.mo_energy, self.mf.mo_coeff = scipy.linalg.eigh(F, S)
+            self.mf.mo_energy, self.mf.mo_coeff = self.mf._eigh(F, S)
 
             self.get_energies_and_potentials()
 

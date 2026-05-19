@@ -92,9 +92,9 @@ class OSKSINV(KSINV):
         F_a = h1e + vj_ao_ref + vref_ao_a
         F_b = h1e + vj_ao_ref + vref_ao_b
         S = self.mf.get_ovlp()
-        mo_energy, mo_coeff = scipy.linalg.eigh(F_a, S)
+        mo_energy, mo_coeff = self.mf._eigh(F_a, S)
         self.mf.mo_energy[0], self.mf.mo_coeff[0] = mo_energy, mo_coeff
-        mo_energy, mo_coeff = scipy.linalg.eigh(F_b, S)
+        mo_energy, mo_coeff = self.mf._eigh(F_b, S)
         self.mf.mo_energy[1], self.mf.mo_coeff[1] = mo_energy, mo_coeff
 
         if self.spin_sym:
@@ -278,9 +278,9 @@ class OSKSINV(KSINV):
 
             F_a = h1e + vj_ao_ref + vref_ao_a + vrest_ao_a
             F_b = h1e + vj_ao_ref + vref_ao_b + vrest_ao_b
-            mo_energy, mo_coeff = scipy.linalg.eigh(F_a, S)
+            mo_energy, mo_coeff = self.mf._eigh(F_a, S)
             self.mf.mo_energy[0], self.mf.mo_coeff[0] = mo_energy, mo_coeff
-            mo_energy, mo_coeff = scipy.linalg.eigh(F_b, S)
+            mo_energy, mo_coeff = self.mf._eigh(F_b, S)
             self.mf.mo_energy[1], self.mf.mo_coeff[1] = mo_energy, mo_coeff
 
             if self.spin_sym:

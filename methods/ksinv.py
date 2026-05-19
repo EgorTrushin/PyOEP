@@ -68,7 +68,7 @@ class KSINV(EXXOEP):
 
         F = h1e + vj_ao_ref + vref_ao
         S = self.mf.get_ovlp()
-        self.mf.mo_energy, self.mf.mo_coeff = scipy.linalg.eigh(F, S)
+        self.mf.mo_energy, self.mf.mo_coeff = self.mf._eigh(F, S)
 
         print("ITER" + " " * 8 + "ENERGY" + " " * 12 + "RHS" + " " * 8 + "MIXING")
         for current_iter in range(maxit):
@@ -143,7 +143,7 @@ class KSINV(EXXOEP):
             )
 
             F = h1e + vj_ao_ref + vref_ao + vrest_ao
-            self.mf.mo_energy, self.mf.mo_coeff = scipy.linalg.eigh(F, S)
+            self.mf.mo_energy, self.mf.mo_coeff = self.mf._eigh(F, S)
 
             print(f"{current_iter:3}  {e_tot:18.12f}    {delta_rhs:.3e}    {mixing:.3e}")
             if abs(delta_rhs) < conv_thr:
