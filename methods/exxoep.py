@@ -58,7 +58,7 @@ class EXXOEP:
         self.get_y_and_yII()
         self.converged = False
 
-    def _eigh_canorth(self, h, s):
+    def _eigh_canorth(self, h, s, overwrite=False, x=None):
         """Canonical-orth-aware replacement for mf._eigh, ensuring Fock-diagonalization
         outputs lie in the same nmo-dim lindep-free subspace as the initial mf.mo_coeff."""
         X = self.X_lindep
