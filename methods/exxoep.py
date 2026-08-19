@@ -5,10 +5,6 @@ import numpy as np
 from copy import deepcopy
 from pyscf import dft, gto, df, lib
 
-import functools
-
-print = functools.partial(print, flush=True)
-
 
 class EXXOEP:
     r"""
