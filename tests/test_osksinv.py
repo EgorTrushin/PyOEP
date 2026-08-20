@@ -1,5 +1,6 @@
 import numpy as np
-from pyscf import scf, gto
+from pyscf import gto, scf
+
 from methods.osexxoep import OSEXXOEP
 from methods.osksinv import OSKSINV
 

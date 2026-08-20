@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import scipy
-import numpy as np
 from copy import deepcopy
-from pyscf import dft, gto, df, lib
+
+import numpy as np
+import scipy
+from pyscf import df, dft, gto, lib
 
 
 class EXXOEP:

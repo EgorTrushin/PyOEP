@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import scipy
 import numpy as np
-from pyscf import dft, gto, df, lib
+import scipy
+from pyscf import lib
 from pyscf.gw.rpa import _get_scaled_legendre_roots
+
 from .osexxoep import OSEXXOEP
 from .rpaoep import RPAOEP
 

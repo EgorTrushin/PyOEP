@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
-from pyscf import scf, gto, fci
+from pyscf import fci, gto, scf
 
 mol = gto.M(atom="B 0 0 0", basis="aug-cc-pwCVTZ", symmetry=False, verbose=0, spin=1)
 mf = scf.UHF(mol)

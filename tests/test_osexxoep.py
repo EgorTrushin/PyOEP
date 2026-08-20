@@ -1,4 +1,5 @@
-from pyscf import scf, gto
+from pyscf import gto, scf
+
 from methods.osexxoep import OSEXXOEP
 
 ORBITAL_BASIS = "aug-cc-pwCVTZ"

@@ -6,14 +6,13 @@ Adapted from https://github.com/andyzynlove/FCNN_XC_Potential/blob/main/relaxed_
 """
 
 import ctypes
+from functools import reduce
+
 import numpy as np
 from pyscf import lib
-from functools import reduce
-from pyscf.cc import ccsd
-from pyscf.cc import _ccsd
-from pyscf.cc import ccsd_rdm
+from pyscf.cc import _ccsd, ccsd, ccsd_rdm
+from pyscf.grad.mp2 import _index_frozen_active, _shell_prange
 from pyscf.scf import cphf
-from pyscf.grad.mp2 import _shell_prange, _index_frozen_active
 
 
 def cc_rrdm1(cc_grad, t1=None, t2=None, l1=None, l2=None, eris=None, atmlst=None, d1=None, d2=None):
@@ -186,7 +185,7 @@ def _rdm2_mo2ao(mycc, d2, mo_coeff, fsave=None):
     nao_pair = nao * (nao + 1) // 2
     nvir_pair = nvir * (nvir + 1) // 2
 
-    fdrv = getattr(_ccsd.libcc, "AO2MOnr_e2_drv")
+    fdrv = _ccsd.libcc.AO2MOnr_e2_drv
     ftrans = _ccsd.libcc.AO2MOtranse2_nr_s1
     fmm = _ccsd.libcc.CCmmm_transpose_sum
     pao_loc = ctypes.POINTER(ctypes.c_void_p)()

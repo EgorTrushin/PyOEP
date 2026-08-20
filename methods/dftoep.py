@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 import sys
-import scipy
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
+import scipy
 from pyscf import dft
+
 from .exxoep import EXXOEP
 
 

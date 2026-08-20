@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
-from pyscf import gto, scf, cc
+from pyscf import cc, gto, scf
 from relaxed_ccsd import cc_rrdm1
 
 ORBITAL_BASIS = "aug-cc-pwCV5Z"

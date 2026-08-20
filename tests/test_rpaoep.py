@@ -1,4 +1,5 @@
-from pyscf import scf, gto
+from pyscf import gto, scf
+
 from methods.rpaoep import RPAOEP
 
 ORBITAL_BASIS = "aug-cc-pVTZ"

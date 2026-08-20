@@ -1,4 +1,5 @@
 from pyscf import dft, gto
+
 from methods.osdftoep import OSDFTOEP
 
 ORBITAL_BASIS = "aug-cc-pwCVTZ"

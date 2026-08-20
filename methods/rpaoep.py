@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import scipy
 import numpy as np
-from pyscf import dft, gto, df, lib
-from pyscf.scf.diis import CDIIS
+import scipy
+from pyscf import df, dft, gto
 from pyscf.gw.rpa import _get_scaled_legendre_roots
+from pyscf.scf.diis import CDIIS
+
 from .exxoep import EXXOEP
 
 
