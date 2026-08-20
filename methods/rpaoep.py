@@ -24,8 +24,7 @@ class RPAOEP(EXXOEP):
         space_sym: whether to perform space-symmetrization
     """
 
-    def __init__(self, mf, oep_basis, ri_basis,
-                 use_HOMO_condition=False, vh_via_OEP=False, space_sym=False):
+    def __init__(self, mf, oep_basis, ri_basis, use_HOMO_condition=False, vh_via_OEP=False, space_sym=False):
         self.ri_basis = ri_basis
         self.E_corr = 0.0
         super().__init__(mf, oep_basis, use_HOMO_condition, vh_via_OEP, space_sym)
@@ -40,9 +39,9 @@ class RPAOEP(EXXOEP):
         inside run() since it depends on the current MOs.
         """
         self.auxmol_ri = df.addons.make_auxmol(self.mf.mol, self.ri_basis)
-        self.ints_3c_ao_ri = df.incore.aux_e2(
-            self.mf.mol, self.auxmol_ri, intor="int3c2e"
-        ).transpose(2, 1, 0)  # (naux_ri, nao, nao)
+        self.ints_3c_ao_ri = df.incore.aux_e2(self.mf.mol, self.auxmol_ri, intor="int3c2e").transpose(
+            2, 1, 0
+        )  # (naux_ri, nao, nao)
         self.naux_ri = self.ints_3c_ao_ri.shape[0]
 
         # Overlap preprocessing for RI basis (analogous to get_WII)
@@ -53,10 +52,7 @@ class RPAOEP(EXXOEP):
         self.WII_ri = np.diag(diag) @ evecs @ np.diag(1.0 / np.sqrt(eigs))
 
         # Charge constraint for RI basis (analogous to get_y_and_yII + get_W3_charge)
-        pmol_ri = gto.M(
-            atom=self.mf.mol.atom, basis=self.ri_basis,
-            spin=self.mf.mol.spin, charge=self.mf.mol.charge
-        )
+        pmol_ri = gto.M(atom=self.mf.mol.atom, basis=self.ri_basis, spin=self.mf.mol.spin, charge=self.mf.mol.charge)
         pmol_ri.verbose = 0
         grid_ri = dft.gen_grid.Grids(pmol_ri)
         grid_ri.build()
@@ -90,8 +86,7 @@ class RPAOEP(EXXOEP):
         super().get_energies_and_potentials()
         self.e_tot += self.E_corr
 
-    def run(self, maxit=50, thr_fai_oep=5e-2, thr_fai_ri=1e-8,
-            nw=20, x0=2.5, linear_mixing=-1.0, e_conv_thr=1e-8):
+    def run(self, maxit=50, thr_fai_oep=5e-2, thr_fai_ri=1e-8, nw=20, x0=2.5, linear_mixing=-1.0, e_conv_thr=1e-8):
         r"""
         Performs a self-consistent RPA-OEP calculation.
 
@@ -132,14 +127,12 @@ class RPAOEP(EXXOEP):
             W = self.get_W(W3, ints_3c, self.nelec, thr_fai_oep)
             X0_x = self.get_X0(ints_3c, self.mf.mo_energy, self.nelec, W)
             vref_ao = np.einsum("ijk,k->ij", self.ints_3c_ao_t, vref_oep[:])
-            rhs_x = self.get_rhs(vref_ao, self.vxnl_ao, ints_3c, self.mf.mo_coeff,
-                                  self.mf.mo_energy, self.nelec, W)
+            rhs_x = self.get_rhs(vref_ao, self.vxnl_ao, ints_3c, self.mf.mo_coeff, self.mf.mo_energy, self.nelec, W)
             rhs_x = scipy.linalg.solve(X0_x, rhs_x)
             vrest_oep = W @ rhs_x
             vrest_ao = np.einsum("ijk,k->ij", self.ints_3c_ao_t, vrest_oep[:])
 
-            self.potentials_test(vrest_oep, vref_oep, vrest_ao, vref_ao,
-                                 self.vxnl_ao, self.mf.mo_coeff, self.nelec, z)
+            self.potentials_test(vrest_oep, vref_oep, vrest_ao, vref_ao, self.vxnl_ao, self.mf.mo_coeff, self.nelec, z)
 
             # --- Correlation OEP (RPA) ---
             # The correlation part always uses a charge-only W (no HOMO condition),
@@ -158,9 +151,7 @@ class RPAOEP(EXXOEP):
             # RI integrals in W_ri-filtered basis: (naux_ri_c, nmo, nmo)
             ints_3c_ri_W = (W_ri.T @ ints_3c_ri_mo.reshape(self.naux_ri, -1)).reshape(naux_ri_c, self.nmo, self.nmo)
 
-            rhs_c, self.E_corr = self.get_scrpa_rhs(
-                ints_3c_oep_W, ints_3c_ri_W, self.mf.mo_energy, self.nelec, nw, x0
-            )
+            rhs_c, self.E_corr = self.get_scrpa_rhs(ints_3c_oep_W, ints_3c_ri_W, self.mf.mo_energy, self.nelec, nw, x0)
 
             # X0 for correlation uses RPA prefactor (4x compared to EXX).
             # get_X0 uses e_ov = 1/(eps_i - eps_a) < 0, so X0_c is negative.
@@ -184,7 +175,7 @@ class RPAOEP(EXXOEP):
                     fock_old = F.copy()
             else:
                 S = self.mf.get_ovlp()
-                D = 2.0 * self.mf.mo_coeff[:, :self.nelec] @ self.mf.mo_coeff[:, :self.nelec].T
+                D = 2.0 * self.mf.mo_coeff[:, : self.nelec] @ self.mf.mo_coeff[:, : self.nelec].T
                 F = adiis.update(S, D, F)
 
             S = self.mf.get_ovlp()
@@ -251,8 +242,8 @@ class RPAOEP(EXXOEP):
         # Precompute frequency-independent quantities for vectorized Rii/Ria
         fai_ri_flat = fai_ri.reshape(naux_ri_c, nv * nelec)  # (naux_ri_c, nv*no)
         M_virt_T = ints_3c_ri[:, nelec:, :].reshape(naux_ri_c * nv, nmo).T  # (nmo, naux_ri_c*nv)
-        M_occ_T  = ints_3c_ri[:, :nelec, :].reshape(naux_ri_c * nelec, nmo).T  # (nmo, naux_ri_c*no)
-        oep_occ_flat  = ints_3c_oep[:, :nelec, :].transpose(0, 2, 1).reshape(naux_c, -1)  # (naux_c, nmo*no)
+        M_occ_T = ints_3c_ri[:, :nelec, :].reshape(naux_ri_c * nelec, nmo).T  # (nmo, naux_ri_c*no)
+        oep_occ_flat = ints_3c_oep[:, :nelec, :].transpose(0, 2, 1).reshape(naux_c, -1)  # (naux_c, nmo*no)
         oep_virt_flat = ints_3c_oep[:, nelec:, :].transpose(0, 2, 1).reshape(naux_c, -1)  # (naux_c, nmo*nv)
         _d = mo_energy[:nelec][None, :] - mo_energy[:, None]  # (nmo, no)
         _m = np.abs(_d) > 1e-6
@@ -265,7 +256,6 @@ class RPAOEP(EXXOEP):
         rhs = np.zeros(naux_c)
 
         for omega, wt in zip(freqs, wts):
-
             # --- Build X0(omega) in RI basis and diagonalize ---
             lam = self._get_lambda_rpa(mo_energy, nelec, omega)  # (nv, no), positive
             X0_ri = fai_ri_flat @ (fai_ri_flat * lam.reshape(1, -1)).T
@@ -291,7 +281,8 @@ class RPAOEP(EXXOEP):
 
             # R[m, a, i] = sum_{m'} Kmat[m, m'] * lam_neg[a, i] * fai_ri[m', a, i]
             R = (Kmat @ (lam_neg[None] * fai_ri).reshape(naux_ri_c, nv * nelec)).reshape(
-                naux_ri_c, nv, nelec)  # (naux_ri_c, nv, no)
+                naux_ri_c, nv, nelec
+            )  # (naux_ri_c, nv, no)
 
             # --- Rii: t_i[s, i] = sum_{m,a} ints_3c_ri[m, nelec+a, s] * R[m, a, i] ---
             T_si = (M_virt_T @ R.reshape(naux_ri_c * nv, nelec)) * inv_denom_i  # (nmo, no)
@@ -303,7 +294,7 @@ class RPAOEP(EXXOEP):
 
             # --- Yia term: diagonal correction ---
             # Y_ai[a, i] = gamma[a, i] * sum_n K_n * F_ai[n, a, i]^2
-            Y_ai = gamma * (K_n @ (F_ai ** 2).reshape(naux_ri_c, -1)).reshape(nv, nelec)  # (nv, no)
+            Y_ai = gamma * (K_n @ (F_ai**2).reshape(naux_ri_c, -1)).reshape(nv, nelec)  # (nv, no)
 
             # rhs[nu] += sum_{a,i} Y_ai[a,i] * (N_diag[nu, no+a] - N_diag[nu, i])
             rhs_om += N_diag[:, nelec:] @ Y_ai.sum(axis=1) - N_diag[:, :nelec] @ Y_ai.sum(axis=0)
@@ -319,7 +310,7 @@ class RPAOEP(EXXOEP):
         """
         eps_ai = mo_energy[nelec:, None] - mo_energy[None, :nelec]  # (nv, no), positive
         eps_ai = np.where(np.abs(eps_ai) > thr, eps_ai, np.sign(eps_ai + 1e-300) * thr)
-        return 4.0 * eps_ai / (eps_ai ** 2 + omega ** 2)
+        return 4.0 * eps_ai / (eps_ai**2 + omega**2)
 
     def _get_gamma_rpa(self, mo_energy, nelec, omega, thr=1e-6):
         """
@@ -329,5 +320,5 @@ class RPAOEP(EXXOEP):
         """
         eps_ai = mo_energy[nelec:, None] - mo_energy[None, :nelec]  # (nv, no)
         eps_ai = np.where(np.abs(eps_ai) > thr, eps_ai, np.sign(eps_ai + 1e-300) * thr)
-        denom = eps_ai ** 2 + omega ** 2
-        return -4.0 / denom + 8.0 * eps_ai ** 2 / denom ** 2
+        denom = eps_ai**2 + omega**2
+        return -4.0 / denom + 8.0 * eps_ai**2 / denom**2

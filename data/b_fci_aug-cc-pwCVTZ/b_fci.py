@@ -16,11 +16,11 @@ nelec_a = 3
 nelec_b = 2
 norb = mf.mo_coeff.shape[1]
 dm1a, dm1b = cisolver.make_rdm1s(fcivec, norb, (nelec_a, nelec_b))
-dm1a = mf.mo_coeff[0]@dm1a@mf.mo_coeff[0].T
-dm1b = mf.mo_coeff[1]@dm1b@mf.mo_coeff[1].T
+dm1a = mf.mo_coeff[0] @ dm1a @ mf.mo_coeff[0].T
+dm1b = mf.mo_coeff[1] @ dm1b @ mf.mo_coeff[1].T
 dm = np.stack((dm1a, dm1b))
 
-with open('dm.npy', 'wb') as f:
+with open("dm.npy", "wb") as f:
     np.save(f, dm)
-with open('energy.txt', 'w') as f:
+with open("energy.txt", "w") as f:
     print(es, file=f)

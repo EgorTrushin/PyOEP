@@ -72,7 +72,6 @@ class KSINV(EXXOEP):
 
         print("ITER" + " " * 8 + "ENERGY" + " " * 12 + "RHS" + " " * 8 + "MIXING")
         for current_iter in range(maxit):
-
             dm = self.mf.make_rdm1()
             e1 = np.einsum("ij,ji->", h1e, dm)
 
@@ -152,7 +151,7 @@ class KSINV(EXXOEP):
                 print()
                 print(f"Total energy:           {e_tot:18.12f}")
                 print(f"One-electron energy:    {e1:18.12f}")
-                print(f"Two-electron energy:    {e_coul+e_x:18.12f}")
+                print(f"Two-electron energy:    {e_coul + e_x:18.12f}")
                 print(f"Nuclear energy:         {self.mf.energy_nuc():18.12f}")
                 print(f"Coulomb energy:         {e_coul:18.12f}")
                 print(f"Exchange energy:        {e_x:18.12f}")
@@ -162,10 +161,10 @@ class KSINV(EXXOEP):
                 print()
                 print(f"KS Hartree energy:      {e_coul:18.12f}")
                 print(f"Ref Hartree energy:     {e_coul_ref:18.12f}")
-                print(f"Hartree energy error:   {e_coul_ref-e_coul:18.12f}")
+                print(f"Hartree energy error:   {e_coul_ref - e_coul:18.12f}")
                 print(f"KS external energy:     {e_ext:18.12f}")
                 print(f"Ref external energy:    {e_ext_ref:18.12f}")
-                print(f"External energy error:  {e_ext_ref-e_ext:18.12f}")
+                print(f"External energy error:  {e_ext_ref - e_ext:18.12f}")
                 print(f"KS kinetic energy:      {e_kin:18.12f}")
                 F_s = (
                     2 * sum(self.mf.mo_energy[: self.nelec])
@@ -174,7 +173,7 @@ class KSINV(EXXOEP):
                     - np.trace(self.dm_ref @ (vref_ao + vrest_ao))
                 )
                 print(f"Lieb functional:        {F_s:18.12f}")
-                print(f"Lieb error:             {F_s-e_kin:18.12f}")
+                print(f"Lieb error:             {F_s - e_kin:18.12f}")
 
                 grid = dft.gen_grid.Grids(self.mf.mol)
                 grid.build()
@@ -293,12 +292,12 @@ class KSINV(EXXOEP):
                 print("Warning! z*vrest_oep =", np.dot(z, vrest_oep))
             if abs((mo_coeff.T @ vrest_ao @ mo_coeff)[nelec - 1, nelec - 1]) > 1e-12:
                 print("Warning!")
-                print(f"v(HOMO) =  {(mo_coeff.T@vrest_ao@mo_coeff)[nelec-1, nelec-1]:.5f}  (VrestL)")
+                print(f"v(HOMO) =  {(mo_coeff.T @ vrest_ao @ mo_coeff)[nelec - 1, nelec - 1]:.5f}  (VrestL)")
             v_aux = mo_coeff.T @ (self.mf.get_hcore() + vj_ao) @ mo_coeff
             if (
                 abs(-v_aux[nelec - 1, nelec - 1] - self.ip - (mo_coeff.T @ vref_ao @ mo_coeff)[nelec - 1, nelec - 1])
                 > 1e-12
             ):
                 print("Warning!")
-                print(f"v(HOMO) =  {-v_aux[nelec - 1, nelec - 1]-self.ip:.5f}  (VxNL)")
-                print(f"v(HOMO) =  {(mo_coeff.T@vref_ao@mo_coeff)[nelec-1, nelec-1]:.5f}  (Vref)")
+                print(f"v(HOMO) =  {-v_aux[nelec - 1, nelec - 1] - self.ip:.5f}  (VxNL)")
+                print(f"v(HOMO) =  {(mo_coeff.T @ vref_ao @ mo_coeff)[nelec - 1, nelec - 1]:.5f}  (Vref)")

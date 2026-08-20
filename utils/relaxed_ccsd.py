@@ -5,7 +5,6 @@ CCSD relaxed density matrix
 Adapted from https://github.com/andyzynlove/FCNN_XC_Potential/blob/main/relaxed_ccsd.py
 """
 
-
 import ctypes
 import numpy as np
 from pyscf import lib

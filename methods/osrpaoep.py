@@ -25,8 +25,9 @@ class OSRPAOEP(OSEXXOEP):
         spin_sym: whether to use spin symmetrization (exchange part only)
     """
 
-    def __init__(self, mf, oep_basis, ri_basis,
-                 use_HOMO_condition=False, vh_via_OEP=False, space_sym=False, spin_sym=False):
+    def __init__(
+        self, mf, oep_basis, ri_basis, use_HOMO_condition=False, vh_via_OEP=False, space_sym=False, spin_sym=False
+    ):
         self.ri_basis = ri_basis
         self.E_corr = 0.0
         super().__init__(mf, oep_basis, use_HOMO_condition, vh_via_OEP, space_sym, spin_sym)
@@ -57,8 +58,7 @@ class OSRPAOEP(OSEXXOEP):
         super().get_energies_and_potentials()
         self.e_tot += self.E_corr
 
-    def run(self, maxit=50, thr_fai_oep=5e-2, thr_fai_ri=1e-8,
-            nw=20, x0=2.5, linear_mixing=-1.0, e_conv_thr=1e-8):
+    def run(self, maxit=50, thr_fai_oep=5e-2, thr_fai_ri=1e-8, nw=20, x0=2.5, linear_mixing=-1.0, e_conv_thr=1e-8):
         r"""
         Performs a self-consistent RPA-OEP calculation for open-shell systems.
 
@@ -80,7 +80,6 @@ class OSRPAOEP(OSEXXOEP):
 
         print("ITER" + " " * 8 + "ENERGY" + " " * 12 + "EDIFF" + " " * 13 + "E_CORR")
         for current_iter in range(maxit):
-
             ints_3c_a = self.mf.mo_coeff[0].T @ self.ints_3c_ao @ self.mf.mo_coeff[0]
             ints_3c_b = self.mf.mo_coeff[1].T @ self.ints_3c_ao @ self.mf.mo_coeff[1]
             z_a = z_b = None
@@ -148,14 +147,26 @@ class OSRPAOEP(OSEXXOEP):
             vrest_ao_b = np.einsum("ijk,k->ij", self.ints_3c_ao_t, vrest_oep_b[:])
 
             self.potentials_test(
-                vrest_oep_a, vref_oep_a, vrest_ao_a, vref_ao_a,
-                self.vxnl_ao[0], self.mf.mo_coeff[0], self.nelec[0], z_a,
+                vrest_oep_a,
+                vref_oep_a,
+                vrest_ao_a,
+                vref_ao_a,
+                self.vxnl_ao[0],
+                self.mf.mo_coeff[0],
+                self.nelec[0],
+                z_a,
                 self.ip[0] if self.use_HOMO_condition else None,
             )
             if not self.spin_sym:
                 self.potentials_test(
-                    vrest_oep_b, vref_oep_b, vrest_ao_b, vref_ao_b,
-                    self.vxnl_ao[1], self.mf.mo_coeff[1], self.nelec[1], z_b,
+                    vrest_oep_b,
+                    vref_oep_b,
+                    vrest_ao_b,
+                    vref_ao_b,
+                    self.vxnl_ao[1],
+                    self.mf.mo_coeff[1],
+                    self.nelec[1],
+                    z_b,
                     self.ip[1] if self.use_HOMO_condition else None,
                 )
 
@@ -166,8 +177,7 @@ class OSRPAOEP(OSEXXOEP):
             ints_3c_ri_mo_a = self.mf.mo_coeff[0].T @ self.ints_3c_ao_ri @ self.mf.mo_coeff[0]
             ints_3c_ri_mo_b = self.mf.mo_coeff[1].T @ self.ints_3c_ao_ri @ self.mf.mo_coeff[1]
 
-            W_ri = self._get_W_ri_os(ints_3c_ri_mo_a, self.nelec[0],
-                                     ints_3c_ri_mo_b, self.nelec[1], thr_fai_ri)
+            W_ri = self._get_W_ri_os(ints_3c_ri_mo_a, self.nelec[0], ints_3c_ri_mo_b, self.nelec[1], thr_fai_ri)
             naux_ri_c = W_ri.shape[1]
 
             ints_3c_ri_W_a = (W_ri.T @ ints_3c_ri_mo_a.reshape(self.naux_ri, -1)).reshape(naux_ri_c, self.nmo, self.nmo)
@@ -180,14 +190,26 @@ class OSRPAOEP(OSEXXOEP):
                 ints_3c_oep_W_b = (W_c.T @ ints_3c_b.reshape(self.naux, -1)).reshape(naux_c, self.nmo, self.nmo)
 
                 rhs_c_a, self.E_corr = self.get_oscrpa_rhs(
-                    ints_3c_oep_W_a, ints_3c_ri_W_a, ints_3c_ri_W_b,
-                    self.mf.mo_energy[0], self.nelec[0],
-                    self.mf.mo_energy[1], self.nelec[1], nw, x0
+                    ints_3c_oep_W_a,
+                    ints_3c_ri_W_a,
+                    ints_3c_ri_W_b,
+                    self.mf.mo_energy[0],
+                    self.nelec[0],
+                    self.mf.mo_energy[1],
+                    self.nelec[1],
+                    nw,
+                    x0,
                 )
                 rhs_c_b, _ = self.get_oscrpa_rhs(
-                    ints_3c_oep_W_b, ints_3c_ri_W_b, ints_3c_ri_W_a,
-                    self.mf.mo_energy[1], self.nelec[1],
-                    self.mf.mo_energy[0], self.nelec[0], nw, x0
+                    ints_3c_oep_W_b,
+                    ints_3c_ri_W_b,
+                    ints_3c_ri_W_a,
+                    self.mf.mo_energy[1],
+                    self.nelec[1],
+                    self.mf.mo_energy[0],
+                    self.nelec[0],
+                    nw,
+                    x0,
                 )
 
                 X0_c_a = 4.0 * self.get_X0(ints_3c_a, self.mf.mo_energy[0], self.nelec[0], W_c)
@@ -207,14 +229,26 @@ class OSRPAOEP(OSEXXOEP):
                     ints_3c_oep_W_b = (W_c_b.T @ ints_3c_b.reshape(self.naux, -1)).reshape(naux_c_b, self.nmo, self.nmo)
 
                     rhs_c_a, self.E_corr = self.get_oscrpa_rhs(
-                        ints_3c_oep_W_a, ints_3c_ri_W_a, ints_3c_ri_W_b,
-                        self.mf.mo_energy[0], self.nelec[0],
-                        self.mf.mo_energy[1], self.nelec[1], nw, x0
+                        ints_3c_oep_W_a,
+                        ints_3c_ri_W_a,
+                        ints_3c_ri_W_b,
+                        self.mf.mo_energy[0],
+                        self.nelec[0],
+                        self.mf.mo_energy[1],
+                        self.nelec[1],
+                        nw,
+                        x0,
                     )
                     rhs_c_b, _ = self.get_oscrpa_rhs(
-                        ints_3c_oep_W_b, ints_3c_ri_W_b, ints_3c_ri_W_a,
-                        self.mf.mo_energy[1], self.nelec[1],
-                        self.mf.mo_energy[0], self.nelec[0], nw, x0
+                        ints_3c_oep_W_b,
+                        ints_3c_ri_W_b,
+                        ints_3c_ri_W_a,
+                        self.mf.mo_energy[1],
+                        self.nelec[1],
+                        self.mf.mo_energy[0],
+                        self.nelec[0],
+                        nw,
+                        x0,
                     )
 
                     X0_c_b = 4.0 * self.get_X0(ints_3c_b, self.mf.mo_energy[1], self.nelec[1], W_c_b)
@@ -223,9 +257,7 @@ class OSRPAOEP(OSEXXOEP):
                     vrest_c_ao_b = np.einsum("ijk,k->ij", self.ints_3c_ao_t, vrest_c_oep_b[:])
                 else:
                     rhs_c_a, self.E_corr = self.get_oscrpa_rhs(
-                        ints_3c_oep_W_a, ints_3c_ri_W_a, None,
-                        self.mf.mo_energy[0], self.nelec[0],
-                        None, 0, nw, x0
+                        ints_3c_oep_W_a, ints_3c_ri_W_a, None, self.mf.mo_energy[0], self.nelec[0], None, 0, nw, x0
                     )
                     vrest_c_ao_b = np.zeros_like(ints_3c_a[0])
                     vrest_c_oep_b = np.zeros(self.naux)
@@ -251,17 +283,16 @@ class OSRPAOEP(OSEXXOEP):
                     fock_old_b = F_b.copy()
             else:
                 S = self.mf.get_ovlp()
-                D_a = self.mf.mo_coeff[0][:, :self.nelec[0]] @ self.mf.mo_coeff[0][:, :self.nelec[0]].T
-                D_b = self.mf.mo_coeff[1][:, :self.nelec[1]] @ self.mf.mo_coeff[1][:, :self.nelec[1]].T
+                D_a = self.mf.mo_coeff[0][:, : self.nelec[0]] @ self.mf.mo_coeff[0][:, : self.nelec[0]].T
+                D_b = self.mf.mo_coeff[1][:, : self.nelec[1]] @ self.mf.mo_coeff[1][:, : self.nelec[1]].T
                 e_a = F_a @ D_a @ S - S @ D_a @ F_a
                 e_b = F_b @ D_b @ S - S @ D_b @ F_b
                 nao = F_a.shape[0]
                 F_combined = adiis.update(
-                    np.concatenate([F_a.ravel(), F_b.ravel()]),
-                    xerr=np.concatenate([e_a.ravel(), e_b.ravel()])
+                    np.concatenate([F_a.ravel(), F_b.ravel()]), xerr=np.concatenate([e_a.ravel(), e_b.ravel()])
                 )
-                F_a = F_combined[:nao * nao].reshape(nao, nao)
-                F_b = F_combined[nao * nao:].reshape(nao, nao)
+                F_a = F_combined[: nao * nao].reshape(nao, nao)
+                F_b = F_combined[nao * nao :].reshape(nao, nao)
 
             S = self.mf.get_ovlp()
             mo_energy, mo_coeff = self.mf._eigh(F_a, S)
@@ -298,8 +329,9 @@ class OSRPAOEP(OSEXXOEP):
                 self.vrest_c_oep_a = vrest_c_oep_a
                 self.vrest_c_oep_b = vrest_c_oep_b
 
-    def get_oscrpa_rhs(self, ints_3c_oep, ints_3c_ri_1, ints_3c_ri_2,
-                       mo_energy_1, nelec_1, mo_energy_2, nelec_2, nw=20, x0=2.5):
+    def get_oscrpa_rhs(
+        self, ints_3c_oep, ints_3c_ri_1, ints_3c_ri_2, mo_energy_1, nelec_1, mo_energy_2, nelec_2, nw=20, x0=2.5
+    ):
         r"""
         Computes the open-shell RPA-OEP right-hand side and RPA correlation energy.
 
@@ -339,8 +371,8 @@ class OSRPAOEP(OSEXXOEP):
         # Precompute frequency-independent quantities for vectorized Rii/Ria
         fai_ri_1_flat = fai_ri_1.reshape(naux_ri_c, nv_1 * nelec_1)  # (naux_ri_c, nv_1*no_1)
         M_virt_T = ints_3c_ri_1[:, nelec_1:, :].reshape(naux_ri_c * nv_1, nmo_1).T  # (nmo_1, naux_ri_c*nv_1)
-        M_occ_T  = ints_3c_ri_1[:, :nelec_1, :].reshape(naux_ri_c * nelec_1, nmo_1).T  # (nmo_1, naux_ri_c*no_1)
-        oep_occ_flat  = ints_3c_oep[:, :nelec_1, :].transpose(0, 2, 1).reshape(naux_c, -1)
+        M_occ_T = ints_3c_ri_1[:, :nelec_1, :].reshape(naux_ri_c * nelec_1, nmo_1).T  # (nmo_1, naux_ri_c*no_1)
+        oep_occ_flat = ints_3c_oep[:, :nelec_1, :].transpose(0, 2, 1).reshape(naux_c, -1)
         oep_virt_flat = ints_3c_oep[:, nelec_1:, :].transpose(0, 2, 1).reshape(naux_c, -1)
         _d = mo_energy_1[:nelec_1][None, :] - mo_energy_1[:, None]  # (nmo_1, no_1)
         _m = np.abs(_d) > 1e-6
@@ -355,7 +387,6 @@ class OSRPAOEP(OSEXXOEP):
         rhs = np.zeros(naux_c)
 
         for omega, wt in zip(freqs, wts):
-
             # --- Build averaged X0(omega) in RI basis and diagonalize ---
             lam_1 = self._get_lambda_rpa(mo_energy_1, nelec_1, omega)
             X0_ri = fai_ri_1_flat @ (fai_ri_1_flat * lam_1.reshape(1, -1)).T
@@ -383,7 +414,8 @@ class OSRPAOEP(OSEXXOEP):
 
             # R[m, a, i] = sum_{m'} Kmat[m, m'] * lam_neg_1[a, i] * fai_ri_1[m', a, i]
             R = (Kmat @ (lam_neg_1[None] * fai_ri_1).reshape(naux_ri_c, nv_1 * nelec_1)).reshape(
-                naux_ri_c, nv_1, nelec_1)  # (naux_ri_c, nv_1, no_1)
+                naux_ri_c, nv_1, nelec_1
+            )  # (naux_ri_c, nv_1, no_1)
 
             # --- Rii: t_i[s, i] = sum_{m,a} ints_3c_ri_1[m, nelec_1+a, s] * R[m, a, i] ---
             T_si = (M_virt_T @ R.reshape(naux_ri_c * nv_1, nelec_1)) * inv_denom_i  # (nmo_1, no_1)
@@ -394,7 +426,7 @@ class OSRPAOEP(OSEXXOEP):
             rhs_om += 2.0 * (oep_virt_flat @ T_sa.reshape(-1))
 
             # --- Yia term ---
-            Y_ai = gamma_1 * (K_n @ (F_ai ** 2).reshape(naux_ri_c, -1)).reshape(nv_1, nelec_1)
+            Y_ai = gamma_1 * (K_n @ (F_ai**2).reshape(naux_ri_c, -1)).reshape(nv_1, nelec_1)
             rhs_om += N_diag[:, nelec_1:] @ Y_ai.sum(axis=1) - N_diag[:, :nelec_1] @ Y_ai.sum(axis=0)
 
             rhs += rhs_om * wt / (2.0 * np.pi)

@@ -300,7 +300,7 @@ class OSKSINV(KSINV):
                 print()
                 print(f"Total energy:           {e_tot:18.12f}")
                 print(f"One-electron energy:    {e1:18.12f}")
-                print(f"Two-electron energy:    {e_coul+e_x:18.12f}")
+                print(f"Two-electron energy:    {e_coul + e_x:18.12f}")
                 print(f"Nuclear energy:         {self.mf.energy_nuc():18.12f}")
                 print(f"Coulomb energy:         {e_coul:18.12f}")
                 print(f"Exchange energy:        {e_x:18.12f}")
@@ -310,10 +310,10 @@ class OSKSINV(KSINV):
                 print()
                 print(f"KS Hartree energy:      {e_coul:18.12f}")
                 print(f"Ref Hartree energy:     {e_coul_ref:18.12f}")
-                print(f"Hartree energy error:   {e_coul_ref-e_coul:18.12f}")
+                print(f"Hartree energy error:   {e_coul_ref - e_coul:18.12f}")
                 print(f"KS external energy:     {e_ext:18.12f}")
                 print(f"Ref external energy:    {e_ext_ref:18.12f}")
-                print(f"External energy error:  {e_ext_ref-e_ext:18.12f}")
+                print(f"External energy error:  {e_ext_ref - e_ext:18.12f}")
                 print(f"KS kinetic energy:      {e_kin:18.12f}")
                 F_s = (
                     sum(self.mf.mo_energy[0, : self.nelec[0]])
@@ -324,7 +324,7 @@ class OSKSINV(KSINV):
                     - np.trace(self.dm_ref[1] @ (vref_ao_b + vrest_ao_b))
                 )
                 print(f"Lieb functional:        {F_s:18.12f}")
-                print(f"Lieb error:             {F_s-e_kin:18.12f}")
+                print(f"Lieb error:             {F_s - e_kin:18.12f}")
 
                 if not self.space_sym:
                     grid = dft.gen_grid.Grids(self.mf.mol)
@@ -388,9 +388,9 @@ class OSKSINV(KSINV):
                 print("Warning! z*vrest_oep =", np.dot(z, vrest_oep))
             if abs((mo_coeff.T @ vrest_ao @ mo_coeff)[nelec - 1, nelec - 1]) > 1e-12:
                 print("Warning!")
-                print(f"v(HOMO) =  {(mo_coeff.T@vrest_ao@mo_coeff)[nelec-1, nelec-1]:.5f}  (VrestL)")
+                print(f"v(HOMO) =  {(mo_coeff.T @ vrest_ao @ mo_coeff)[nelec - 1, nelec - 1]:.5f}  (VrestL)")
             v_aux = mo_coeff.T @ (self.mf.get_hcore() + vj_ao) @ mo_coeff
             if abs(-v_aux[nelec - 1, nelec - 1] - ip - (mo_coeff.T @ vref_ao @ mo_coeff)[nelec - 1, nelec - 1]) > 1e-12:
                 print("Warning!")
-                print(f"v(HOMO) =  {-v_aux[nelec - 1, nelec - 1]-ip:.5f}  (VxNL)")
-                print(f"v(HOMO) =  {(mo_coeff.T@vref_ao@mo_coeff)[nelec-1, nelec-1]:.5f}  (Vref)")
+                print(f"v(HOMO) =  {-v_aux[nelec - 1, nelec - 1] - ip:.5f}  (VxNL)")
+                print(f"v(HOMO) =  {(mo_coeff.T @ vref_ao @ mo_coeff)[nelec - 1, nelec - 1]:.5f}  (Vref)")

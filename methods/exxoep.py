@@ -46,7 +46,7 @@ class EXXOEP:
         self.nmo = self.mf.mo_coeff.shape[-1]
         S = self.mf.get_ovlp()
         e_S, v_S = scipy.linalg.eigh(S)
-        self.X_lindep = v_S[:, -self.nmo:] / np.sqrt(e_S[-self.nmo:])
+        self.X_lindep = v_S[:, -self.nmo :] / np.sqrt(e_S[-self.nmo :])
         self.mf._eigh = self._eigh_canorth
         self.ints_3c_ao_t = self.ints_3c_ao.transpose(1, 2, 0)
         self.build_pmol_and_grid()
@@ -167,9 +167,7 @@ class EXXOEP:
 
     def build_pmol_and_grid(self):
         """Builds auxiliary mol and integration grid, shared by get_WII and get_y_and_yII."""
-        self.pmol = gto.M(
-            atom=self.mf.mol.atom, basis=self.oep_basis, spin=self.mf.mol.spin, charge=self.mf.mol.charge
-        )
+        self.pmol = gto.M(atom=self.mf.mol.atom, basis=self.oep_basis, spin=self.mf.mol.spin, charge=self.mf.mol.charge)
         self.pmol.verbose = 0
         self.grid = dft.gen_grid.Grids(self.pmol)
         self.grid.build()
@@ -309,11 +307,11 @@ class EXXOEP:
         See Section IIB in J. Chem. Phys. 159, 244109 (2023).
         """
         trans_mat_constraint = self.WII @ W3
-        dmat_a = trans_mat_constraint.T @ ints_3c_a[:, nelec[0]:, :nelec[0]].reshape(
+        dmat_a = trans_mat_constraint.T @ ints_3c_a[:, nelec[0] :, : nelec[0]].reshape(
             self.naux, (self.nmo - nelec[0]) * nelec[0]
         )
         amat_a = dmat_a @ dmat_a.T
-        dmat_b = trans_mat_constraint.T @ ints_3c_b[:, nelec[1]:, :nelec[1]].reshape(
+        dmat_b = trans_mat_constraint.T @ ints_3c_b[:, nelec[1] :, : nelec[1]].reshape(
             self.naux, (self.nmo - nelec[1]) * nelec[1]
         )
         amat_b = dmat_b @ dmat_b.T
@@ -358,7 +356,7 @@ class EXXOEP:
                 print("Warning! z*vrest_oep =", np.dot(z, vrest_oep))
             if abs((mo_coeff.T @ vrest_ao @ mo_coeff)[nelec - 1, nelec - 1]) > 1e-12:
                 print("Warning!")
-                print(f"v(HOMO) =  {(mo_coeff.T@vrest_ao@mo_coeff)[nelec-1, nelec-1]:.5f}  (VrestL)")
+                print(f"v(HOMO) =  {(mo_coeff.T @ vrest_ao @ mo_coeff)[nelec - 1, nelec - 1]:.5f}  (VrestL)")
             if (
                 abs(
                     (mo_coeff.T @ vxnl_ao @ mo_coeff)[nelec - 1, nelec - 1]
@@ -367,8 +365,8 @@ class EXXOEP:
                 > 1e-12
             ):
                 print("Warning!")
-                print(f"v(HOMO) =  {(mo_coeff.T@vxnl_ao@mo_coeff)[nelec-1, nelec-1]:.5f}  (VxNL)")
-                print(f"v(HOMO) =  {(mo_coeff.T@vref_ao@mo_coeff)[nelec-1, nelec-1]:.5f}  (Vref)")
+                print(f"v(HOMO) =  {(mo_coeff.T @ vxnl_ao @ mo_coeff)[nelec - 1, nelec - 1]:.5f}  (VxNL)")
+                print(f"v(HOMO) =  {(mo_coeff.T @ vref_ao @ mo_coeff)[nelec - 1, nelec - 1]:.5f}  (Vref)")
 
     def get_vh_via_OEP(self, ints_3c, nelec):
         """Constructs AO Hartree potential via OEP basis."""

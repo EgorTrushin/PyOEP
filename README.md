@@ -95,22 +95,22 @@ mf_oep.run(maxit=15, thr_fai_oep=1.7e-2)
 
 # Print orbital energies; HOMO and LUMO-HOMO gap are key outputs
 for i in range(10):
-    print(f"{i+1:2}  {mf_oep.mf.mo_energy[i]:10.5f}")
-print(f"HOMO:      {mf_oep.mf.mo_energy[mf_oep.nelec-1]:8.5f}")
-print(f"LUMO-HOMO: {mf_oep.mf.mo_energy[mf_oep.nelec]-mf_oep.mf.mo_energy[mf_oep.nelec-1]:8.5f}")
+    print(f"{i + 1:2}  {mf_oep.mf.mo_energy[i]:10.5f}")
+print(f"HOMO:      {mf_oep.mf.mo_energy[mf_oep.nelec - 1]:8.5f}")
+print(f"LUMO-HOMO: {mf_oep.mf.mo_energy[mf_oep.nelec] - mf_oep.mf.mo_energy[mf_oep.nelec - 1]:8.5f}")
 
 # Evaluate the converged potentials on a 1D grid along the molecular axis
 coords = gen_coords_1d(-5.0, 5.0, 1000)
 vcoul_on_grid = coulomb_potential_on_grid(mf_oep.pmol, coords)
 vrest_on_grid = vcoul_on_grid @ mf_oep.vrest_oep
-vref_on_grid  = vcoul_on_grid @ mf_oep.vref_oep
-vx_on_grid    = vcoul_on_grid @ (mf_oep.vrest_oep + mf_oep.vref_oep)
+vref_on_grid = vcoul_on_grid @ mf_oep.vref_oep
+vx_on_grid = vcoul_on_grid @ (mf_oep.vrest_oep + mf_oep.vref_oep)
 
 # vref is the Fermi-Amaldi reference potential; vrest is the remainder;
 # their sum is the total EXX exchange potential
-plt.plot(coords[:, 2], vref_on_grid,  color="orangered",  label="$v_{x}^{ref}$")
+plt.plot(coords[:, 2], vref_on_grid, color="orangered", label="$v_{x}^{ref}$")
 plt.plot(coords[:, 2], vrest_on_grid, color="dodgerblue", label="$v_{x}^{rest}$")
-plt.plot(coords[:, 2], vx_on_grid,    color="orange",     label="$v_x$")
+plt.plot(coords[:, 2], vx_on_grid, color="orange", label="$v_x$")
 plt.xlim(-5, 5)
 plt.ylabel("Potential (a.u.)", fontsize=16)
 plt.xlabel("r (a.u.)", fontsize=16)
@@ -147,9 +147,9 @@ mf_oep.run(maxit=15, thr_fai_oep=1.7e-2)
 
 # Print orbital energies; HOMO and LUMO-HOMO gap are key outputs
 for i in range(10):
-    print(f"{i+1:2}  {mf_oep.mf.mo_energy[i]:10.5f}")
-print(f"HOMO:      {mf_oep.mf.mo_energy[mf_oep.nelec-1]:8.5f}")
-print(f"LUMO-HOMO: {mf_oep.mf.mo_energy[mf_oep.nelec]-mf_oep.mf.mo_energy[mf_oep.nelec-1]:8.5f}")
+    print(f"{i + 1:2}  {mf_oep.mf.mo_energy[i]:10.5f}")
+print(f"HOMO:      {mf_oep.mf.mo_energy[mf_oep.nelec - 1]:8.5f}")
+print(f"LUMO-HOMO: {mf_oep.mf.mo_energy[mf_oep.nelec] - mf_oep.mf.mo_energy[mf_oep.nelec - 1]:8.5f}")
 
 # Evaluate the converged potentials on a 1D grid along the molecular axis;
 # vref is the Fermi-Amaldi reference potential, vrest is the remainder,
@@ -157,12 +157,12 @@ print(f"LUMO-HOMO: {mf_oep.mf.mo_energy[mf_oep.nelec]-mf_oep.mf.mo_energy[mf_oep
 coords = gen_coords_1d(-5.0, 5.0, 1000)
 vcoul_on_grid = coulomb_potential_on_grid(mf_oep.pmol, coords)
 vrest_on_grid = vcoul_on_grid @ mf_oep.vrest_oep
-vref_on_grid  = vcoul_on_grid @ mf_oep.vref_oep
-vxc_on_grid   = vcoul_on_grid @ (mf_oep.vrest_oep + mf_oep.vref_oep)
+vref_on_grid = vcoul_on_grid @ mf_oep.vref_oep
+vxc_on_grid = vcoul_on_grid @ (mf_oep.vrest_oep + mf_oep.vref_oep)
 
-plt.plot(coords[:, 2], vref_on_grid,  color="orangered",  label="$v_{xc}^{ref}$")
+plt.plot(coords[:, 2], vref_on_grid, color="orangered", label="$v_{xc}^{ref}$")
 plt.plot(coords[:, 2], vrest_on_grid, color="dodgerblue", label="$v_{xc}^{rest}$")
-plt.plot(coords[:, 2], vxc_on_grid,   color="orange",     label="$v_{xc}$")
+plt.plot(coords[:, 2], vxc_on_grid, color="orange", label="$v_{xc}$")
 plt.xlim(-5, 5)
 plt.ylabel("Potential (a.u.)", fontsize=16)
 plt.xlabel("r (a.u.)", fontsize=16)
@@ -200,19 +200,19 @@ mf_oep.run(maxit=30, thr_fai_oep=1.7e-2)
 
 # Print orbital energies
 for i in range(10):
-    print(f"{i+1:2}  {mf_oep.mf.mo_energy[i]:10.5f}")
-print(f"HOMO:      {mf_oep.mf.mo_energy[mf_oep.nelec-1]:8.5f}")
-print(f"LUMO-HOMO: {mf_oep.mf.mo_energy[mf_oep.nelec]-mf_oep.mf.mo_energy[mf_oep.nelec-1]:8.5f}")
+    print(f"{i + 1:2}  {mf_oep.mf.mo_energy[i]:10.5f}")
+print(f"HOMO:      {mf_oep.mf.mo_energy[mf_oep.nelec - 1]:8.5f}")
+print(f"LUMO-HOMO: {mf_oep.mf.mo_energy[mf_oep.nelec] - mf_oep.mf.mo_energy[mf_oep.nelec - 1]:8.5f}")
 
 # Evaluate exchange and correlation potentials on a 1D grid along the molecular axis
 coords = gen_coords_1d(-5.0, 5.0, 1000)
 vcoul_on_grid = coulomb_potential_on_grid(mf_oep.pmol, coords)
-vx_on_grid  = vcoul_on_grid @ (mf_oep.vref_oep + mf_oep.vrest_oep)
-vc_on_grid  = vcoul_on_grid @ mf_oep.vrest_c_oep
+vx_on_grid = vcoul_on_grid @ (mf_oep.vref_oep + mf_oep.vrest_oep)
+vc_on_grid = vcoul_on_grid @ mf_oep.vrest_c_oep
 vxc_on_grid = vcoul_on_grid @ (mf_oep.vref_oep + mf_oep.vrest_oep + mf_oep.vrest_c_oep)
 
-plt.plot(coords[:, 2], vx_on_grid,  color="orangered", label="$v_x$")
-plt.plot(coords[:, 2], vc_on_grid,  color="orange",    label="$v_c$")
+plt.plot(coords[:, 2], vx_on_grid, color="orangered", label="$v_x$")
+plt.plot(coords[:, 2], vc_on_grid, color="orange", label="$v_c$")
 plt.plot(coords[:, 2], vxc_on_grid, color="dodgerblue", label="$v_{xc}$")
 plt.xlim(-5, 5)
 plt.ylabel("Potential (a.u.)", fontsize=16)

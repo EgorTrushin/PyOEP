@@ -23,7 +23,7 @@ print(f"CCSD total energy:         {mf_cc.e_tot:15.12f}", flush=True)
 dm_ccsd_unrelaxed = mf_cc.make_rdm1(ao_repr=True)
 dm_ccsd = cc_rrdm1(mf_cc)
 
-with open('dm.npy', 'wb') as f:
+with open("dm.npy", "wb") as f:
     np.save(f, dm_ccsd)
-with open('energy.txt', 'w') as f:
+with open("energy.txt", "w") as f:
     print(mf_cc.e_tot, file=f)
