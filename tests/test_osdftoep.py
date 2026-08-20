@@ -17,7 +17,7 @@ def calc_n(xc, xc_homo=None, spin_sym=False):
     mf_oep = OSDFTOEP(
         mf,
         OEP_BASIS,
-        use_HOMO_condition=False if xc_homo is None else True,
+        use_HOMO_condition=xc_homo is not None,
         xc_homo=xc_homo,
         spin_sym=spin_sym,
     )
@@ -36,7 +36,7 @@ def calc_c(xc, xc_homo=None, space_sym=False, spin_sym=False):
     mf_oep = OSDFTOEP(
         mf,
         OEP_BASIS,
-        use_HOMO_condition=False if xc_homo is None else True,
+        use_HOMO_condition=xc_homo is not None,
         xc_homo=xc_homo,
         space_sym=space_sym,
         spin_sym=spin_sym,

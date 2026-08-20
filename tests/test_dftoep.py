@@ -15,7 +15,7 @@ def calc_co(xc, xc_homo=None):
 
     mf = dft.RKS(mol, xc=xc).density_fit(auxbasis=DFIT_BASIS).run()
 
-    mf_oep = DFTOEP(mf, OEP_BASIS, use_HOMO_condition=False if xc_homo is None else True, xc_homo=xc_homo)
+    mf_oep = DFTOEP(mf, OEP_BASIS, use_HOMO_condition=xc_homo is not None, xc_homo=xc_homo)
     mf_oep.run(maxit=30, thr_fai_oep=5e-2, e_conv_thr=1e-9)
 
     return mf_oep.e_tot

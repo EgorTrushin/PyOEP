@@ -16,7 +16,7 @@ def make_augmented_aux_basis(mol, aux_basis, extra_exponents=None):
         augmented basis dict suitable for gto.M(basis=...)
     """
     augmented = {}
-    for elem in set([mol.atom_symbol(i) for i in range(mol.natm)]):
+    for elem in {mol.atom_symbol(i) for i in range(mol.natm)}:
         basis = gto.basis.load(aux_basis, elem)  # list of shells
         exps = extra_exponents.get(elem, [])
 

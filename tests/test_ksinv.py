@@ -20,10 +20,7 @@ def calc_ne(use_HOMO_condition=False, vh_via_OEP=False):
     mf_oep = EXXOEP(mf, OEP_BASIS, use_HOMO_condition=use_HOMO_condition, vh_via_OEP=vh_via_OEP)
     mf_oep.run(maxit=30, thr_fai_oep=5e-2, e_conv_thr=1e-12)
 
-    if use_HOMO_condition:
-        ip = -mf_oep.mf.mo_energy[mf_oep.nelec - 1]
-    else:
-        ip = None
+    ip = -mf_oep.mf.mo_energy[mf_oep.nelec - 1] if use_HOMO_condition else None
 
     mf_inv = KSINV(mf_oep.mf, OEP_BASIS, mf_oep.mf.make_rdm1(), mf_oep.e_tot, ip, vh_via_OEP=vh_via_OEP)
     mf_inv.run(maxit=100, thr_fai_oep=5e-2, conv_thr=1e-12)

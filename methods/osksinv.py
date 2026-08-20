@@ -288,7 +288,8 @@ class OSKSINV(KSINV):
                 print(f"{current_iter:3}  {e_tot:18.12f}    {delta_rhs:.3e}   {mixing_alpha:.3e}")
             else:
                 print(
-                    f"{current_iter:3}  {e_tot:18.12f}    {delta_rhs_a:.3e}   {delta_rhs_b:.3e}   {mixing_alpha:.3e}   {mixing_beta:.3e}"
+                    f"{current_iter:3}  {e_tot:18.12f}    {delta_rhs_a:.3e}   {delta_rhs_b:.3e}   "
+                    f"{mixing_alpha:.3e}   {mixing_beta:.3e}"
                 )
             converged = (
                 (abs(delta_rhs) < conv_thr)

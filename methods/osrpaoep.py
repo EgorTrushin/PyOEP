@@ -387,7 +387,7 @@ class OSRPAOEP(OSEXXOEP):
         E_corr = 0.0
         rhs = np.zeros(naux_c)
 
-        for omega, wt in zip(freqs, wts):
+        for omega, wt in zip(freqs, wts, strict=True):
             # --- Build averaged X0(omega) in RI basis and diagonalize ---
             lam_1 = self._get_lambda_rpa(mo_energy_1, nelec_1, omega)
             X0_ri = fai_ri_1_flat @ (fai_ri_1_flat * lam_1.reshape(1, -1)).T

@@ -256,7 +256,7 @@ class RPAOEP(EXXOEP):
         E_corr = 0.0
         rhs = np.zeros(naux_c)
 
-        for omega, wt in zip(freqs, wts):
+        for omega, wt in zip(freqs, wts, strict=True):
             # --- Build X0(omega) in RI basis and diagonalize ---
             lam = self._get_lambda_rpa(mo_energy, nelec, omega)  # (nv, no), positive
             X0_ri = fai_ri_flat @ (fai_ri_flat * lam.reshape(1, -1)).T

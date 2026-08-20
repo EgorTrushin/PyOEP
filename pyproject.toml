@@ -5,6 +5,15 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "UP", "B", "C4", "SIM", "NPY", "RUF"]
 
+# En dash is correct in the journal page ranges cited in docstrings (1667–1683).
+allowed-confusables = ["–"]
+
+[tool.ruff.lint.per-file-ignores]
+# Vendored from https://github.com/andyzynlove/FCNN_XC_Potential; kept close to
+# upstream. RUF059 names (doo/dov/dvo/dvv, dovov/dvvvv/...) are pyscf's
+# occupied/virtual block convention, not throwaway variables.
+"**/relaxed_ccsd.py" = ["RUF059", "SIM102"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["methods", "utils"]
 
