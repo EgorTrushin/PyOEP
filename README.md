@@ -300,6 +300,29 @@ python -m pytest tests/test_osrpaoep.py
 
 The `-m` flag ensures the `methods/` package is importable when running from the project root. Alternatively, use plain `pytest tests/` if `PYTHONPATH` is set (see Installation).
 
+## Code style
+
+Formatting and linting are handled by [ruff](https://docs.astral.sh/ruff/):
+
+```bash
+pip install ruff
+```
+
+Format the code:
+
+```bash
+ruff format .
+```
+
+Lint the code, optionally applying the fixes ruff considers safe:
+
+```bash
+ruff check .
+ruff check --fix .
+```
+
+Both commands cover the `.py` files, the tutorial notebooks, and the Python examples in this README. The configuration lives under `[tool.ruff]` in `pyproject.toml` — line length 120, targeting Python 3.12.
+
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
