@@ -62,11 +62,9 @@ class OSKSINV(KSINV):
         e_ext_ref = np.einsum("ij,ji->", self.mf.mol.intor_symmetric("int1e_nuc"), self.dm_ref[0])
         e_ext_ref += np.einsum("ij,ji->", self.mf.mol.intor_symmetric("int1e_nuc"), self.dm_ref[1])
 
-        vj_ao_ref, vxnl_ao_ref = self.mf.get_jk(dm=np.asarray(self.dm_ref))
+        vj_ao_ref = self.mf.get_j(dm=self.dm_ref)
         vj_ao_ref = vj_ao_ref[0] + vj_ao_ref[1]
         e_coul_ref = np.einsum("ij,ji->", vj_ao_ref, self.dm_ref[0] + self.dm_ref[1]) * 0.5
-        e_x_ref = -0.5 * np.einsum("ij,ji->", vxnl_ao_ref[0], self.dm_ref[0])
-        e_x_ref += -0.5 * np.einsum("ij,ji->", vxnl_ao_ref[1], self.dm_ref[1])
         e_ee_ref = self.e_ref - e1 - self.mf.energy_nuc()
 
         aux = self.dm_ref[0] @ self.ints_3c_ao

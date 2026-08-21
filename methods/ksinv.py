@@ -55,9 +55,8 @@ class KSINV(EXXOEP):
         e_kin_ref = np.einsum("ij,ji->", self.mf.mol.intor_symmetric("int1e_kin"), self.dm_ref)
         e_ext_ref = np.einsum("ij,ji->", self.mf.mol.intor_symmetric("int1e_nuc"), self.dm_ref)
 
-        vj_ao_ref, vxnl_ao_ref = self.mf.get_jk(dm=np.asarray(self.dm_ref))
+        vj_ao_ref = self.mf.get_j(dm=self.dm_ref)
         e_coul_ref = np.einsum("ij,ji->", vj_ao_ref, self.dm_ref) * 0.5
-        e_x_ref = -0.5 * np.einsum("ij,ji->", vxnl_ao_ref, self.dm_ref) * 0.5
         e_ee_ref = self.e_ref - e1 - self.mf.energy_nuc()
 
         aux = self.dm_ref @ self.ints_3c_ao
