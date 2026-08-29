@@ -1,3 +1,17 @@
+[project]
+name = "PyOEP"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "basis-set-exchange>=0.12",
+    "jupyterlab>=4.6.3",
+    "matplotlib>=3.11.1",
+    "psutil>=7.2.2",
+    "pyscf>=2.14.0",
+    "pytest>=9.1.1",
+    "ruff>=0.16.5",
+]
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"
@@ -19,3 +33,7 @@ known-first-party = ["methods", "utils"]
 
 [tool.ruff.format]
 docstring-code-format = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
