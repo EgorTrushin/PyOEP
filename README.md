@@ -19,21 +19,31 @@ Gaussian basis set optimized effective potential methods which are implemented b
 
 ## Installation
 
-Clone the repository and install the required packages:
+Clone the repository, then set up the environment in one of two ways.
+
+### With uv
+
+[uv](https://docs.astral.sh/uv/) sets up everything and installs the exact versions recorded in `uv.lock`:
 
 ```bash
-pip install pyscf basis_set_exchange matplotlib
+uv sync
 ```
 
-NumPy and SciPy are included with PySCF. For running tests, `pytest` is also required:
+This creates the virtual environment `.venv/` using the Python version from `.python-version` (3.12). Prefix commands with `uv run` to use the environment, e.g. `uv run pytest` or `uv run jupyter lab`, or activate it once with `source .venv/bin/activate`.
+
+### With python3 and pip
+
+Without uv, create the virtual environment with `python3` (3.12 or newer) and install the pinned packages from `requirements.txt`:
 
 ```bash
-pip install pytest
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-To make the `methods/` and `utils/` packages importable, either run scripts from the project root or add the project root to `PYTHONPATH`.
+PyOEP is not installed as a package, so scripts and notebooks must be started from the project root for the `methods/` and `utils/` packages to be importable.
 
-**Performance note:** Using an Intel Python distribution with MKL (e.g. via `conda install -c intel intelpython3_core`) is strongly recommended over the standard OpenBLAS-based NumPy/SciPy. MKL-accelerated linear algebra routines can provide a substantial speedup for the matrix operations used throughout PyOEP.
+**Performance note:** NumPy and SciPy are taken from the [numpy-mkl](https://urob.github.io/numpy-mkl) index and are therefore linked against Intel MKL. MKL-accelerated linear algebra routines provide a substantial speedup for the self-consistent random phase approximation method. MKL is not mandatory: removing the `[tool.uv.sources]` pins in `pyproject.toml` falls back to the standard OpenBLAS-based builds on PyPI, which is also the way to go on platforms the numpy-mkl index does not cover.
 
 ## Class overview
 
@@ -53,11 +63,14 @@ To make the `methods/` and `utils/` packages importable, either run scripts from
 ## Repository structure
 
 ```
-methods/    OEP and KS inversion classes (see class overview above)
-tests/      test suite
-data/       reference data (FCI, CCSD densities and energies) used in tutorials
-utils/      helper scripts for pre- and post-processing, used in tutorials
-*.ipynb     tutorial notebooks
+methods/          OEP and KS inversion classes (see class overview above)
+tests/            test suite
+data/             reference data (FCI, CCSD densities and energies) used in tutorials
+utils/            helper scripts for pre- and post-processing, used in tutorials
+*.ipynb           tutorial notebooks
+pyproject.toml    project metadata, dependencies, ruff and pytest configuration
+uv.lock           resolved dependency versions used by uv sync
+requirements.txt  pinned dependencies for installation without uv
 ```
 
 ## Examples
@@ -282,43 +295,39 @@ plt.show()
 Run all tests from the project root:
 
 ```bash
-python -m pytest tests/
+uv run pytest
 ```
 
 Run a specific test file:
 
 ```bash
-python -m pytest tests/test_exxoep.py
-python -m pytest tests/test_osexxoep.py
-python -m pytest tests/test_dftoep.py
-python -m pytest tests/test_osdftoep.py
-python -m pytest tests/test_ksinv.py
-python -m pytest tests/test_osksinv.py
-python -m pytest tests/test_rpaoep.py
-python -m pytest tests/test_osrpaoep.py
+uv run pytest tests/test_exxoep.py
+uv run pytest tests/test_osexxoep.py
+uv run pytest tests/test_dftoep.py
+uv run pytest tests/test_osdftoep.py
+uv run pytest tests/test_ksinv.py
+uv run pytest tests/test_osksinv.py
+uv run pytest tests/test_rpaoep.py
+uv run pytest tests/test_osrpaoep.py
 ```
 
-The `-m` flag ensures the `methods/` package is importable when running from the project root. Alternatively, use plain `pytest tests/` if `PYTHONPATH` is set (see Installation).
+`pyproject.toml` sets `testpaths = ["tests"]`, so a bare `pytest` collects the whole suite, and `pythonpath = ["."]` makes the `methods/` and `utils/` packages importable without setting `PYTHONPATH`. Inside an activated environment, drop the `uv run` prefix.
 
 ## Code style
 
-Formatting and linting are handled by [ruff](https://docs.astral.sh/ruff/):
-
-```bash
-pip install ruff
-```
+Formatting and linting are handled by [ruff](https://docs.astral.sh/ruff/), which is installed together with the other dependencies.
 
 Format the code:
 
 ```bash
-ruff format .
+uv run ruff format .
 ```
 
 Lint the code, optionally applying the fixes ruff considers safe:
 
 ```bash
-ruff check .
-ruff check --fix .
+uv run ruff check .
+uv run ruff check --fix .
 ```
 
 Both commands cover the `.py` files, the tutorial notebooks, and the Python examples in this README. The configuration lives under `[tool.ruff]` in `pyproject.toml` — line length 120, targeting Python 3.12.
