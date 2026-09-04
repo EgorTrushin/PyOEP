@@ -41,7 +41,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-PyOEP is not installed as a package, so scripts and notebooks must be started from the project root for the `methods/` and `utils/` packages to be importable.
+PyOEP is not installed as a package, so scripts must be started from the project root for the `methods/` and `utils/` packages to be importable. The tutorial notebooks live in `tutorials/` and put the project root on `sys.path` themselves, so they run wherever JupyterLab is started from.
 
 **Performance note:** NumPy and SciPy are taken from the [numpy-mkl](https://urob.github.io/numpy-mkl) index and are therefore linked against Intel MKL. MKL-accelerated linear algebra routines provide a substantial speedup for the self-consistent random phase approximation method. MKL is not mandatory: removing the `[tool.uv.sources]` pins in `pyproject.toml` falls back to the standard OpenBLAS-based builds on PyPI, which is also the way to go on platforms the numpy-mkl index does not cover.
 
@@ -67,7 +67,7 @@ methods/          OEP and KS inversion classes (see class overview above)
 tests/            test suite
 data/             reference data (FCI, CCSD densities and energies) used in tutorials
 utils/            helper scripts for pre- and post-processing, used in tutorials
-*.ipynb           tutorial notebooks
+tutorials/        tutorial notebooks
 pyproject.toml    project metadata, dependencies, ruff and pytest configuration
 uv.lock           resolved dependency versions used by uv sync
 requirements.txt  pinned dependencies for installation without uv
@@ -284,11 +284,11 @@ plt.show()
 
 ## Tutorials
 
-- [Exact-exchange optimized effective potential method](./EXXOEP.ipynb)
-- [Density functional theory optimized effective potential method](./DFTOEP.ipynb)
-- [Response function Kohn-Sham inversion method](./KSINV.ipynb)
-- [Self-consistent RPA optimized effective potential method](./RPAOEP.ipynb)
-- [Advanced topics](./Advanced.ipynb)
+- [Exact-exchange optimized effective potential method](./tutorials/EXXOEP.ipynb)
+- [Density functional theory optimized effective potential method](./tutorials/DFTOEP.ipynb)
+- [Response function Kohn-Sham inversion method](./tutorials/KSINV.ipynb)
+- [Self-consistent RPA optimized effective potential method](./tutorials/RPAOEP.ipynb)
+- [Advanced topics](./tutorials/Advanced.ipynb)
 
 ## Running tests
 
