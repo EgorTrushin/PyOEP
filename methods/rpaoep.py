@@ -112,6 +112,9 @@ class RPAOEP(EXXOEP):
             z = None
 
             # --- Exchange OEP (same as EXXOEP) ---
+            if self.vh_via_OEP or self.space_sym:
+                self.get_vh_via_OEP(ints_3c, self.nelec)
+
             if self.use_HOMO_condition:
                 z, zII = self.get_z_and_zII(ints_3c, self.mf.mo_energy, self.nelec)
                 vref_oep = self.get_v_ref_w_homo(zII, ints_3c, self.mf.mo_coeff, self.nelec, self.vxnl_ao)
@@ -119,9 +122,6 @@ class RPAOEP(EXXOEP):
             else:
                 vref_oep = self.get_v_ref(ints_3c, self.nelec)
                 W3 = self.get_W3_charge()
-
-            if self.vh_via_OEP or self.space_sym:
-                self.get_vh_via_OEP(ints_3c, self.nelec)
 
             W = self.get_W(W3, ints_3c, self.nelec, thr_fai_oep)
             X0_x = self.get_X0(ints_3c, self.mf.mo_energy, self.nelec, W)
@@ -138,8 +138,13 @@ class RPAOEP(EXXOEP):
             # even when use_HOMO_condition=True for the exchange part.
             # This matches Molpro: when l_homo=True, basis_process_opm is called
             # a second time with l_homo=False before scrpa_rhs.
-            W3_c = self.get_W3_charge()
-            W_c = self.get_W(W3_c, ints_3c, self.nelec, thr_fai_oep)
+            # X0 for correlation uses RPA prefactor (4x compared to EXX).
+            if self.use_HOMO_condition:
+                W_c = self.get_W(self.get_W3_charge(), ints_3c, self.nelec, thr_fai_oep)
+                X0_c = 4.0 * self.get_X0(ints_3c, self.mf.mo_energy, self.nelec, W_c)
+            else:  # identical to the exchange part
+                W_c = W
+                X0_c = 4.0 * X0_x
             W_ri = self._get_W_ri(ints_3c_ri_mo, self.nelec, thr_fai_ri)
             naux_c = W_c.shape[1]
             naux_ri_c = W_ri.shape[1]
@@ -150,14 +155,14 @@ class RPAOEP(EXXOEP):
             # RI integrals in W_ri-filtered basis: (naux_ri_c, nmo, nmo)
             ints_3c_ri_W = (W_ri.T @ ints_3c_ri_mo.reshape(self.naux_ri, -1)).reshape(naux_ri_c, self.nmo, self.nmo)
 
-            rhs_c, self.E_corr = self.get_scrpa_rhs(ints_3c_oep_W, ints_3c_ri_W, self.mf.mo_energy, self.nelec, nw, x0)
+            [rhs_c], self.E_corr = self.get_rpa_rhs(
+                [(ints_3c_oep_W, ints_3c_ri_W, self.mf.mo_energy, self.nelec)], nw, x0
+            )
 
-            # X0 for correlation uses RPA prefactor (4x compared to EXX).
             # get_X0 uses e_ov = 1/(eps_i - eps_a) < 0, so X0_c is negative.
-            # get_scrpa_rhs returns a positive rhs (no e_ov factor), so negate
+            # get_rpa_rhs returns a positive rhs (no e_ov factor), so negate
             # it here to match the Python sign convention (both sides of the
             # linear system must carry the same sign flip for the solve to cancel).
-            X0_c = 4.0 * self.get_X0(ints_3c, self.mf.mo_energy, self.nelec, W_c)
             rhs_c = scipy.linalg.solve(X0_c, -rhs_c)
             vrest_c_oep = W_c @ rhs_c
             vrest_c_ao = np.einsum("ijk,k->ij", self.ints_3c_ao_t, vrest_c_oep[:])
@@ -203,61 +208,78 @@ class RPAOEP(EXXOEP):
                 self.vrest_oep = vrest_oep
                 self.vrest_c_oep = vrest_c_oep
 
-    def get_scrpa_rhs(self, ints_3c_oep, ints_3c_ri, mo_energy, nelec, nw=20, x0=2.5):
+    def get_rpa_rhs(self, spins, nw=20, x0=2.5):
         r"""
-        Computes the RPA-OEP right-hand side and RPA correlation energy via frequency quadrature.
+        Computes the RPA-OEP right-hand sides and RPA correlation energy via frequency quadrature.
 
-        At each frequency omega, the RPA response matrix X0(omega) is built and diagonalized
-        in the RI basis. The RHS receives three contributions per frequency point:
+        At each frequency omega, the RPA response matrix X0(omega) is built in the RI basis,
+        averaged over the spin channels, and diagonalized once. The RHS of each spin channel
+        receives three contributions per frequency point:
           - Rii: coupling through occupied orbital pairs
           - Ria: coupling through virtual orbital pairs
           - Yia: diagonal correction from orbital energy derivatives
+        For open-shell systems, the RHS of a spin channel uses the orbitals of that channel only,
+        matching the Fortran uscrpa_rhs.
 
         Args:
-            ints_3c_oep: (naux_c, nmo, nmo) 3-center integrals in W-filtered OEP basis (MO)
-            ints_3c_ri: (naux_ri_c, nmo, nmo) 3-center integrals in W_ri-filtered RI basis (MO)
-            mo_energy: (nmo,) orbital energies
-            nelec: number of occupied orbitals
+            spins: list with a tuple (ints_3c_oep, ints_3c_ri, mo_energy, nelec) for each spin channel,
+                   one channel for closed-shell and two (alpha, beta) for open-shell systems:
+                     ints_3c_oep: (naux_c, nmo, nmo) 3-center integrals in W-filtered OEP basis (MO),
+                                  or None if the RHS of this channel is not needed
+                     ints_3c_ri: (naux_ri_c, nmo, nmo) 3-center integrals in W_ri-filtered RI basis (MO)
+                     mo_energy: (nmo,) orbital energies
+                     nelec: number of occupied orbitals
             nw: number of Gauss-Legendre frequency quadrature points
             x0: frequency scaling parameter
 
         Returns:
-            rhs: (naux_c,) RPA-OEP right-hand side
+            rhs: list with the (naux_c,) RPA-OEP right-hand side of each spin channel
+                 (None if its ints_3c_oep is None, zero if it has no electrons)
             E_corr: RPA correlation energy
         """
-        nmo = len(mo_energy)
-        nv = nmo - nelec
-        naux_c = ints_3c_oep.shape[0]
-        naux_ri_c = ints_3c_ri.shape[0]
+        naux_ri_c = spins[0][1].shape[0]
 
         freqs, wts = _get_scaled_legendre_roots(nw, x0)
 
-        # Occ-virt block of RI integrals: (naux_ri_c, nv, no)
-        fai_ri = ints_3c_ri[:, nelec:, :nelec]
+        # Occ-virt blocks of RI integrals of each channel: (naux_ri_c, nv*no)
+        fai_ri_flat = [ints_3c_ri[:, nelec:, :nelec].reshape(naux_ri_c, -1) for _, ints_3c_ri, _, nelec in spins]
 
-        # Diagonal OEP integrals N_diag[nu, s] = ints_3c_oep[nu, s, s], used in Yia term
-        N_diag = np.diagonal(ints_3c_oep, axis1=1, axis2=2)  # (naux_c, nmo)
-
-        # Precompute frequency-independent quantities for vectorized Rii/Ria
-        fai_ri_flat = fai_ri.reshape(naux_ri_c, nv * nelec)  # (naux_ri_c, nv*no)
-        M_virt_T = ints_3c_ri[:, nelec:, :].reshape(naux_ri_c * nv, nmo).T  # (nmo, naux_ri_c*nv)
-        M_occ_T = ints_3c_ri[:, :nelec, :].reshape(naux_ri_c * nelec, nmo).T  # (nmo, naux_ri_c*no)
-        oep_occ_flat = ints_3c_oep[:, :nelec, :].transpose(0, 2, 1).reshape(naux_c, -1)  # (naux_c, nmo*no)
-        oep_virt_flat = ints_3c_oep[:, nelec:, :].transpose(0, 2, 1).reshape(naux_c, -1)  # (naux_c, nmo*nv)
-        _d = mo_energy[:nelec][None, :] - mo_energy[:, None]  # (nmo, no)
-        _m = np.abs(_d) > 1e-6
-        inv_denom_i = np.where(_m, 1.0 / np.where(_m, _d, 1.0), 0.0)  # (nmo, no)
-        _d = mo_energy[nelec:][None, :] - mo_energy[:, None]  # (nmo, nv)
-        _m = np.abs(_d) > 1e-6
-        inv_denom_a = np.where(_m, 1.0 / np.where(_m, _d, 1.0), 0.0)  # (nmo, nv)
+        # Precompute frequency-independent quantities for vectorized Rii/Ria of each channel
+        rhs_data = []
+        for ints_3c_oep, ints_3c_ri, mo_energy, nelec in spins:
+            if ints_3c_oep is None or nelec == 0:
+                rhs_data.append(None)
+                continue
+            nmo = len(mo_energy)
+            nv = nmo - nelec
+            naux_c = ints_3c_oep.shape[0]
+            # Occ-virt block of RI integrals: (naux_ri_c, nv, no)
+            fai_ri = ints_3c_ri[:, nelec:, :nelec]
+            # Diagonal OEP integrals N_diag[nu, s] = ints_3c_oep[nu, s, s], used in Yia term
+            N_diag = np.diagonal(ints_3c_oep, axis1=1, axis2=2)  # (naux_c, nmo)
+            M_virt_T = ints_3c_ri[:, nelec:, :].reshape(naux_ri_c * nv, nmo).T  # (nmo, naux_ri_c*nv)
+            M_occ_T = ints_3c_ri[:, :nelec, :].reshape(naux_ri_c * nelec, nmo).T  # (nmo, naux_ri_c*no)
+            oep_occ_flat = ints_3c_oep[:, :nelec, :].transpose(0, 2, 1).reshape(naux_c, -1)  # (naux_c, nmo*no)
+            oep_virt_flat = ints_3c_oep[:, nelec:, :].transpose(0, 2, 1).reshape(naux_c, -1)  # (naux_c, nmo*nv)
+            _d = mo_energy[:nelec][None, :] - mo_energy[:, None]  # (nmo, no)
+            _m = np.abs(_d) > 1e-6
+            inv_denom_i = np.where(_m, 1.0 / np.where(_m, _d, 1.0), 0.0)  # (nmo, no)
+            _d = mo_energy[nelec:][None, :] - mo_energy[:, None]  # (nmo, nv)
+            _m = np.abs(_d) > 1e-6
+            inv_denom_a = np.where(_m, 1.0 / np.where(_m, _d, 1.0), 0.0)  # (nmo, nv)
+            rhs_data.append((fai_ri, N_diag, M_virt_T, M_occ_T, oep_occ_flat, oep_virt_flat, inv_denom_i, inv_denom_a))
 
         E_corr = 0.0
-        rhs = np.zeros(naux_c)
+        rhs = [None if ints_3c_oep is None else np.zeros(ints_3c_oep.shape[0]) for ints_3c_oep, *_ in spins]
 
         for omega, wt in zip(freqs, wts, strict=True):
-            # --- Build X0(omega) in RI basis and diagonalize ---
-            lam = self._get_lambda_rpa(mo_energy, nelec, omega)  # (nv, no), positive
-            X0_ri = fai_ri_flat @ (fai_ri_flat * lam.reshape(1, -1)).T
+            # --- Build X0(omega) in RI basis, averaged over spin channels, and diagonalize ---
+            lam = [self._get_lambda_rpa(mo_energy, nelec, omega) for _, _, mo_energy, nelec in spins]  # (nv, no)
+            X0_ri = np.zeros((naux_ri_c, naux_ri_c))
+            for (*_, nelec), fai_flat, lam_s in zip(spins, fai_ri_flat, lam, strict=True):
+                if nelec > 0:
+                    X0_ri += fai_flat @ (fai_flat * lam_s.reshape(1, -1)).T
+            X0_ri /= len(spins)
             eval_n, evec = scipy.linalg.eigh(X0_ri)  # (naux_ri_c,), (naux_ri_c, naux_ri_c)
 
             # --- Correlation energy integrand: sum_n [ln(1+lambda_n) - lambda_n] ---
@@ -266,39 +288,46 @@ class RPAOEP(EXXOEP):
             # --- Non-linear screening factor K_n = -lambda_n / (lambda_n + 1) ---
             K_n = -eval_n / (eval_n + 1.0)  # (naux_ri_c,)
 
-            # --- F_ai: rotate occ-virt RI integrals to eigenbasis ---
-            F_ai = (evec.T @ fai_ri_flat).reshape(naux_ri_c, nv, nelec)  # (naux_ri_c, nv, no)
-
-            # lambda with sign flip (as in Fortran: lambda1 = -lambda1)
-            lam_neg = -lam  # (nv, no)
-
-            # --- gamma: d(lambda_rpa)/d(eps_ai) with opposite sign, used in Yia term ---
-            gamma = self._get_gamma_rpa(mo_energy, nelec, omega)  # (nv, no)
-
             # Kmat[m, m'] = sum_n K_n * evec[m, n] * evec[m', n]
             Kmat = (evec * K_n) @ evec.T  # (naux_ri_c, naux_ri_c)
 
-            # R[m, a, i] = sum_{m'} Kmat[m, m'] * lam_neg[a, i] * fai_ri[m', a, i]
-            R = (Kmat @ (lam_neg[None] * fai_ri).reshape(naux_ri_c, nv * nelec)).reshape(
-                naux_ri_c, nv, nelec
-            )  # (naux_ri_c, nv, no)
+            for s, data in enumerate(rhs_data):
+                if data is None:
+                    continue
+                fai_ri, N_diag, M_virt_T, M_occ_T, oep_occ_flat, oep_virt_flat, inv_denom_i, inv_denom_a = data
+                _, nv, nelec = fai_ri.shape
+                mo_energy = spins[s][2]
 
-            # --- Rii: t_i[s, i] = sum_{m,a} ints_3c_ri[m, nelec+a, s] * R[m, a, i] ---
-            T_si = (M_virt_T @ R.reshape(naux_ri_c * nv, nelec)) * inv_denom_i  # (nmo, no)
-            rhs_om = 2.0 * (oep_occ_flat @ T_si.reshape(-1))
+                # --- F_ai: rotate occ-virt RI integrals to eigenbasis ---
+                F_ai = (evec.T @ fai_ri_flat[s]).reshape(naux_ri_c, nv, nelec)  # (naux_ri_c, nv, no)
 
-            # --- Ria: t_a[s, a] = sum_{m,i} ints_3c_ri[m, i, s] * R[m, a, i] ---
-            T_sa = (M_occ_T @ R.transpose(0, 2, 1).reshape(naux_ri_c * nelec, nv)) * inv_denom_a  # (nmo, nv)
-            rhs_om += 2.0 * (oep_virt_flat @ T_sa.reshape(-1))
+                # lambda with sign flip (as in Fortran: lambda1 = -lambda1)
+                lam_neg = -lam[s]  # (nv, no)
 
-            # --- Yia term: diagonal correction ---
-            # Y_ai[a, i] = gamma[a, i] * sum_n K_n * F_ai[n, a, i]^2
-            Y_ai = gamma * (K_n @ (F_ai**2).reshape(naux_ri_c, -1)).reshape(nv, nelec)  # (nv, no)
+                # --- gamma: d(lambda_rpa)/d(eps_ai) with opposite sign, used in Yia term ---
+                gamma = self._get_gamma_rpa(mo_energy, nelec, omega)  # (nv, no)
 
-            # rhs[nu] += sum_{a,i} Y_ai[a,i] * (N_diag[nu, no+a] - N_diag[nu, i])
-            rhs_om += N_diag[:, nelec:] @ Y_ai.sum(axis=1) - N_diag[:, :nelec] @ Y_ai.sum(axis=0)
+                # R[m, a, i] = sum_{m'} Kmat[m, m'] * lam_neg[a, i] * fai_ri[m', a, i]
+                R = (Kmat @ (lam_neg[None] * fai_ri).reshape(naux_ri_c, nv * nelec)).reshape(
+                    naux_ri_c, nv, nelec
+                )  # (naux_ri_c, nv, no)
 
-            rhs += rhs_om * wt / (2.0 * np.pi)
+                # --- Rii: t_i[s, i] = sum_{m,a} ints_3c_ri[m, nelec+a, s] * R[m, a, i] ---
+                T_si = (M_virt_T @ R.reshape(naux_ri_c * nv, nelec)) * inv_denom_i  # (nmo, no)
+                rhs_om = 2.0 * (oep_occ_flat @ T_si.reshape(-1))
+
+                # --- Ria: t_a[s, a] = sum_{m,i} ints_3c_ri[m, i, s] * R[m, a, i] ---
+                T_sa = (M_occ_T @ R.transpose(0, 2, 1).reshape(naux_ri_c * nelec, nv)) * inv_denom_a  # (nmo, nv)
+                rhs_om += 2.0 * (oep_virt_flat @ T_sa.reshape(-1))
+
+                # --- Yia term: diagonal correction ---
+                # Y_ai[a, i] = gamma[a, i] * sum_n K_n * F_ai[n, a, i]^2
+                Y_ai = gamma * (K_n @ (F_ai**2).reshape(naux_ri_c, -1)).reshape(nv, nelec)  # (nv, no)
+
+                # rhs[nu] += sum_{a,i} Y_ai[a,i] * (N_diag[nu, no+a] - N_diag[nu, i])
+                rhs_om += N_diag[:, nelec:] @ Y_ai.sum(axis=1) - N_diag[:, :nelec] @ Y_ai.sum(axis=0)
+
+                rhs[s] += rhs_om * wt / (2.0 * np.pi)
 
         return rhs, E_corr
 
