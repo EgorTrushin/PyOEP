@@ -242,7 +242,7 @@ The KS inversion recovers the xc potential corresponding to a given reference de
 import matplotlib.pyplot as plt
 from pyscf import scf, gto, cc
 from methods.ksinv import KSINV
-from utils.relaxed_ccsd import cc_rrdm1
+from utils.relaxed_dm_cc import relaxed_rdm1
 from utils.coulomb_potential_on_grid import coulomb_potential_on_grid
 from utils.gen_coords_1d import gen_coords_1d
 
@@ -263,7 +263,7 @@ mf_cc = cc.CCSD(mf)
 mf_cc.kernel()
 print(f"CCSD correlation energy:   {mf_cc.e_corr:15.12f}")
 print(f"CCSD total energy:         {mf_cc.e_tot:15.12f}")
-dm_ccsd = cc_rrdm1(mf_cc)  # relaxed CCSD density matrix
+dm_ccsd = relaxed_rdm1(mf_cc, "ccsd")  # relaxed CCSD density matrix
 
 # Run KS inversion
 mf_inv = KSINV(mf, "aug-cc-pVDZ-RIFIT", dm_ccsd, mf_cc.e_tot)
