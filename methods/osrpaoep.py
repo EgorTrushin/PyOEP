@@ -38,6 +38,7 @@ class OSRPAOEP(OSEXXOEP):
     _get_lambda_rpa = RPAOEP._get_lambda_rpa
     _get_gamma_rpa = RPAOEP._get_gamma_rpa
     get_rpa_rhs = RPAOEP.get_rpa_rhs
+    get_vx_fock = RPAOEP.get_vx_fock
 
     def _get_W_ri_os(self, ints_3c_ri_mo_a, nelec_a, ints_3c_ri_mo_b, nelec_b, thr_fai_ri):
         """
@@ -248,10 +249,10 @@ class OSRPAOEP(OSEXXOEP):
                     vrest_c_ao_b = np.zeros_like(vrest_c_ao_a)
                     vrest_c_oep_b = np.zeros(self.naux)
 
-            # --- Fock matrices: h0 + vJ + vx_local + vc ---
+            # --- Fock matrices: h0 + vJ + vx + vc ---
             h1e = self.mf.get_hcore(self.mf.mol)
-            F_a = h1e + self.vj_ao + vref_ao_a + vrest_ao_a + vrest_c_ao_a
-            F_b = h1e + self.vj_ao + vref_ao_b + vrest_ao_b + vrest_c_ao_b
+            F_a = h1e + self.vj_ao + self.get_vx_fock(vref_ao_a + vrest_ao_a, self.vxnl_ao[0]) + vrest_c_ao_a
+            F_b = h1e + self.vj_ao + self.get_vx_fock(vref_ao_b + vrest_ao_b, self.vxnl_ao[1]) + vrest_c_ao_b
 
             if linear_mixing > 0:
                 if fock_old_a is None:

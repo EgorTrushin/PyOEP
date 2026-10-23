@@ -85,6 +85,13 @@ class RPAOEP(EXXOEP):
         super().get_energies_and_potentials()
         self.e_tot += self.E_corr
 
+    def get_vx_fock(self, vx_local_ao, vxnl_ao):
+        """
+        Exchange part of the Fock matrix: the local exchange potential vx_local_ao (vref + vrest).
+        Hybrid variants override this to mix in the non-local exchange operator vxnl_ao.
+        """
+        return vx_local_ao
+
     def run(self, maxit=50, thr_fai_oep=5e-2, thr_fai_ri=1e-8, nw=20, x0=2.5, linear_mixing=-1.0, e_conv_thr=1e-8):
         r"""
         Performs a self-consistent RPA-OEP calculation.
@@ -167,9 +174,9 @@ class RPAOEP(EXXOEP):
             vrest_c_oep = W_c @ rhs_c
             vrest_c_ao = np.einsum("ijk,k->ij", self.ints_3c_ao_t, vrest_c_oep[:])
 
-            # --- Fock matrix: h0 + vJ + vx_local + vc ---
+            # --- Fock matrix: h0 + vJ + vx + vc ---
             h1e = self.mf.get_hcore(self.mf.mol)
-            F = h1e + self.vj_ao + vref_ao + vrest_ao + vrest_c_ao
+            F = h1e + self.vj_ao + self.get_vx_fock(vref_ao + vrest_ao, self.vxnl_ao) + vrest_c_ao
 
             if linear_mixing > 0:
                 if fock_old is None:

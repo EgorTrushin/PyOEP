@@ -17,6 +17,10 @@ Gaussian basis set optimized effective potential methods which are implemented b
   - P. Bleiziffer, A. Heßelmann, A. Görling. J. Chem. Phys. 139, 084113 (2013). https://doi.org/10.1063/1.4818984
   - E. Trushin, S. Fauser, A. Mölkner, J. Erhard, A. Görling. Phys. Rev. Lett. 134, 016402 (2025). https://doi.org/10.1103/PhysRevLett.134.016402
 
+- Hybrid random phase approximation optimized effective potential method for closed- and open-shell systems
+  - A. Thierbach, D. Schmidtel, A. Görling. J. Chem. Phys. 151, 144117 (2019). https://doi.org/10.1063/1.5120587
+  - E. Trushin, R. Mandalia, A. Görling. J. Chem. Phys. 165, 134115 (2026). https://doi.org/10.1063/5.0345799
+
 ## Installation
 
 Clone the repository, then set up the environment in one of two ways.
@@ -57,8 +61,10 @@ PyOEP is not installed as a package, so scripts must be started from the project
 | `OSKSINV` | methods/osksinv.py | KS inversion | open-shell |
 | `RPAOEP` | methods/rpaoep.py | RPA-OEP | closed-shell |
 | `OSRPAOEP` | methods/osrpaoep.py | RPA-OEP | open-shell |
+| `HybridRPAOEP` | methods/hybridrpaoep.py | hybrid RPA-OEP | closed-shell |
+| `OSHybridRPAOEP` | methods/oshybridrpaoep.py | hybrid RPA-OEP | open-shell |
 
-`OSEXXOEP` inherits from `EXXOEP`, `OSDFTOEP` from `OSEXXOEP`, `KSINV` from `EXXOEP`, `OSKSINV` from `KSINV`, `RPAOEP` from `EXXOEP`, and `OSRPAOEP` from `OSEXXOEP`.
+`OSEXXOEP` inherits from `EXXOEP`, `OSDFTOEP` from `OSEXXOEP`, `KSINV` from `EXXOEP`, `OSKSINV` from `KSINV`, `RPAOEP` from `EXXOEP`, `OSRPAOEP` from `OSEXXOEP`, `HybridRPAOEP` from `RPAOEP`, and `OSHybridRPAOEP` from `OSRPAOEP`.
 
 ## Repository structure
 
