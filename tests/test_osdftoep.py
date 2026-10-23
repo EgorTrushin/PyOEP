@@ -1,3 +1,4 @@
+import numpy as np
 from pyscf import dft, gto
 
 from methods.osdftoep import OSDFTOEP
@@ -5,6 +6,8 @@ from methods.osdftoep import OSDFTOEP
 ORBITAL_BASIS = "aug-cc-pwCVTZ"
 OEP_BASIS = "aug-cc-pVDZ-RIFIT"
 DFIT_BASIS = "aug-cc-pwCV5Z-RIFIT"
+SMALL_BASIS = "cc-pVTZ"
+SMALL_OEP_BASIS = "cc-pVDZ-RIFIT"
 
 
 def calc_n(xc, xc_homo=None, spin_sym=False):
@@ -63,3 +66,24 @@ def test_answer():
     assert abs(e_tot + 54.529604545581) < 1e-7
     e_tot = calc_c("PBE", xc_homo="GGA_X_PBE", space_sym=True)
     assert abs(e_tot + 37.794494655618) < 1e-7
+
+
+def test_ip():
+    """The constructor removes the alpha and beta HOMO electrons for the IPs; ip_first_iter keeps them fixed."""
+    mol = gto.M(atom="N 0. 0. 0.", basis=SMALL_BASIS, spin=3, verbose=0)
+    mf = dft.UKS(mol, xc="PBE").density_fit().run()
+
+    # frozen-orbital IPs with the grids and density fitting of mf
+    mf_x = dft.UKS(mol, xc="GGA_X_PBE").density_fit(with_df=mf.with_df)
+    mf_x.grids = mf.grids
+    e_n = mf_x.energy_tot(mf.make_rdm1())
+    ip_ref = []
+    for spin, nocc in enumerate(mol.nelec):
+        mo_occ = mf.mo_occ.copy()
+        mo_occ[spin, nocc - 1] = 0
+        ip_ref.append(mf_x.energy_tot(mf.make_rdm1(mf.mo_coeff, mo_occ)) - e_n)
+
+    mf_oep = OSDFTOEP(mf, SMALL_OEP_BASIS, use_HOMO_condition=True, xc_homo="GGA_X_PBE", ip_first_iter=True)
+    assert np.allclose(mf_oep.ip, ip_ref, rtol=0.0, atol=1e-10)
+    mf_oep.run(maxit=5)
+    assert np.allclose(mf_oep.ip, ip_ref, rtol=0.0, atol=1e-10)

@@ -41,7 +41,6 @@ class OSDFTOEP(OSEXXOEP):
     ):
         self.xc_homo = xc_homo
         self.ip_first_iter = ip_first_iter
-        self.ip = None
         super().__init__(mf, oep_basis, use_HOMO_condition, vh_via_OEP, space_sym, spin_sym)
 
     def get_energies_and_potentials(self):
@@ -80,7 +79,7 @@ class OSDFTOEP(OSEXXOEP):
         else:
             self.vxnl_ao = vxc
 
-        if self.use_HOMO_condition and not (self.ip_first_iter and self.ip is not None):
+        if self.use_HOMO_condition and not (self.ip_first_iter and self.ip[0] is not None):
             mf1 = deepcopy(self.mf)
             mf1.xc = self.xc_homo
             mf1.max_cycle = 0

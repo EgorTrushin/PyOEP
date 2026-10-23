@@ -33,8 +33,9 @@ class EXXOEP:
         Builds the auxiliary mol, three-center integrals, integration grid,
         and performs the auxiliary basis set preprocessing (WII, y, yII).
         Called from __init__ of EXXOEP and from subclasses that bypass
-        EXXOEP.__init__ (KSINV, OSKSINV) to avoid triggering
-        get_energies_and_potentials().
+        EXXOEP.__init__ (OSEXXOEP, KSINV, OSKSINV), either to set up
+        attributes needed by get_energies_and_potentials() first or to
+        avoid triggering it.
         """
         self.mf = deepcopy(mf)
         self.oep_basis = oep_basis

@@ -24,10 +24,14 @@ class OSEXXOEP(EXXOEP):
     """
 
     def __init__(self, mf, oep_basis, use_HOMO_condition=False, vh_via_OEP=False, space_sym=False, spin_sym=False):
+        # EXXOEP.__init__ is bypassed: nelec must be (nalpha, nbeta) before
+        # get_energies_and_potentials() runs (OSDFTOEP uses it for the IPs)
         self.ip = [None, None]  # subclasses (e.g. OSDFTOEP) may set this to [ip_alpha, ip_beta]
-        super().__init__(mf, oep_basis, use_HOMO_condition, vh_via_OEP, space_sym)
+        self.use_HOMO_condition = use_HOMO_condition
         self.nelec = mf.nelec
         self.spin_sym = spin_sym
+        self.init_common(mf, oep_basis, vh_via_OEP, space_sym)
+        self.get_energies_and_potentials()
 
     def run(self, maxit=50, thr_fai_oep=5e-2, linear_mixing=-1.0, e_conv_thr=1e-8):
         r"""
