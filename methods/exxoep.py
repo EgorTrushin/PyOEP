@@ -86,6 +86,11 @@ class EXXOEP:
         for current_iter in range(maxit):
             ints_3c = self.mf.mo_coeff.T @ self.ints_3c_ao @ self.mf.mo_coeff
             z = None
+
+            # before the HOMO condition, whose DFT variant uses vj_ao
+            if self.vh_via_OEP or self.space_sym:
+                self.get_vh_via_OEP(ints_3c, self.nelec)
+
             if self.use_HOMO_condition:
                 z, zII = self.get_z_and_zII(ints_3c, self.mf.mo_energy, self.nelec)
                 vref_oep = self.get_v_ref_w_homo(zII, ints_3c, self.mf.mo_coeff, self.nelec, self.vxnl_ao)
@@ -93,9 +98,6 @@ class EXXOEP:
             else:
                 vref_oep = self.get_v_ref(ints_3c, self.nelec)
                 W3 = self.get_W3_charge()
-
-            if self.vh_via_OEP or self.space_sym:
-                self.get_vh_via_OEP(ints_3c, self.nelec)
 
             W = self.get_W(W3, ints_3c, self.nelec, thr_fai_oep)
 

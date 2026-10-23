@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import sys
 from copy import deepcopy
 
 import numpy as np
@@ -17,14 +16,17 @@ class DFTOEP(EXXOEP):
     E. Trushin, A. Görling. J. Chem. Theory Comput. 2025, 21, 4, 1667–1683. https://doi.org/10.1021/acs.jctc.4c01477
     E. Trushin, A. Görling. J. Chem. Phys. 155, 054109 (2021). https://doi.org/10.1063/5.0056431
 
+    The exchange-correlation part of the potential of mf.xc (including exact exchange of hybrid and
+    range-separated hybrid functionals and VV10 nonlocal correlation) is replaced by a local potential.
+
     Args:
         mf: PySCF object with RKS calculation
         oep_basis: auxiliary basis to solve OEP equation
         vh_via_OEP: whether to construct AO Hartree potential via OEP basis
         space_sym: whether to perform space-symmetrization
         use_HOMO_condition: whether to use HOMO condition
-        xc_homo: exchange-functional to use for evaluation of the HOMO condition
-        first_iter: whether to calculate HOMO energy for HOMO condition only at first iteration
+        xc_homo: exchange-functional to use for evaluation of the HOMO condition (required with use_HOMO_condition)
+        ip_first_iter: whether to calculate HOMO energy for HOMO condition only at first iteration
     """
 
     def __init__(
@@ -37,6 +39,8 @@ class DFTOEP(EXXOEP):
         xc_homo=None,
         ip_first_iter=False,
     ):
+        if use_HOMO_condition and xc_homo is None:
+            raise ValueError("xc_homo is required when use_HOMO_condition=True")
         self.xc_homo = xc_homo
         self.ip_first_iter = ip_first_iter
         self.ip = None
@@ -44,60 +48,46 @@ class DFTOEP(EXXOEP):
 
     def get_energies_and_potentials(self):
         """Determines energy contributions and potentials."""
-
-        self.mf.max_cycle = 0
-        self.mf.run()
-        self.e_tot = self.mf.e_tot
-
         dm = self.mf.make_rdm1()
-
-        ni = dft.numint.NumInt()
-        _, _, vxc = ni.nr_rks(self.mf.mol, self.mf.grids, self.mf.xc, dm)
-
-        if dft.libxc.is_hybrid_xc(self.mf.xc):
-            omega, alpha, hyb = ni.rsh_and_hybrid_coeff(self.mf.xc)
-            if omega == 0:
-                self.vj_ao, self.vxnl_ao = self.mf.get_jk(self.mf.mol, dm)
-            elif alpha == 0:  # LR=0, only SR exchange
-                self.vj_ao = self.mf.get_j(self.mf.mol, dm)
-                self.vxnl_ao = self.mf.get_k(self.mf.mol, dm, omega=-omega)
-            else:
-                sys.exit("Not implemented case for hybrid functionals")
-        else:
-            self.vj_ao = self.mf.get_j(self.mf.mol, dm)
-
-        self.E_Coul = np.einsum("ij,ji->", self.vj_ao, dm) * 0.5
-
-        if dft.libxc.is_hybrid_xc(self.mf.xc):
-            self.E_x = -0.5 * np.einsum("ij,ji->", self.vxnl_ao, dm) * 0.5
-            self.vxnl_ao *= -0.5
-
-        if dft.libxc.is_hybrid_xc(self.mf.xc):
-            self.vxnl_ao = vxc + hyb * self.vxnl_ao
-        else:
-            self.vxnl_ao = vxc
+        veff = self.mf.get_veff(self.mf.mol, dm)
+        self.e_tot = self.mf.energy_tot(dm, self.mf.get_hcore(), veff)
+        self.E_Coul = veff.ecoul
+        self.E_xc = veff.exc
+        self.vj_ao = veff.vj
+        self.vxnl_ao = np.asarray(veff) - veff.vj
 
         if self.use_HOMO_condition and not (self.ip_first_iter and self.ip is not None):
-            mf1 = deepcopy(self.mf)
-            mf1.xc = self.xc_homo
-            mf1.max_cycle = 0
-            mf1.kernel(dm0=dm)
-            E_n_x = mf1.e_tot
+            self.ip = self.get_ip(dm)
 
-            mol1 = deepcopy(self.mf.mol)
-            mol1.spin = 1
-            mol1.charge += 1
-            mol1.build(False, False)
-            occ = np.stack((mf1.mo_occ, mf1.mo_occ)) / 2.0
-            occ[1][self.nelec - 1] = 0
-            mo0 = np.stack((mf1.mo_coeff, mf1.mo_coeff))
-            mf1 = dft.UKS(mol1, xc=self.xc_homo).density_fit()
-            mf1.max_cycle = 0
-            dm1 = mf1.make_rdm1(mo0, occ)
-            mf1.kernel(dm0=dm1)
-            E_nm1_x = mf1.e_tot
+    def _xc_homo_mf(self, mol, ks_class):
+        """
+        Returns a ks_class (RKS or UKS) object for mol with the xc_homo functional. It shares the grids
+        and the density-fitting object of mf, so that their errors cancel in the ionization potential.
+        """
+        mf1 = ks_class(mol, xc=self.xc_homo)
+        mf1.grids = self.mf.grids
+        if getattr(self.mf, "with_df", None) is not None:
+            mf1 = mf1.density_fit(with_df=self.mf.with_df, only_dfj=getattr(self.mf, "only_dfj", False))
+        return mf1
 
-            self.ip = E_nm1_x - E_n_x
+    def get_ip(self, dm):
+        """
+        Determines the ionization potential for the HOMO condition as the xc_homo energy difference
+        between the cation with the HOMO electron removed (frozen orbitals) and the neutral system.
+        """
+        E_n_x = self._xc_homo_mf(self.mf.mol, dft.RKS).energy_tot(dm)
+
+        mol1 = deepcopy(self.mf.mol)
+        mol1.spin = 1
+        mol1.charge += 1
+        mol1.build(False, False)
+        occ = np.stack((self.mf.mo_occ, self.mf.mo_occ)) / 2.0
+        occ[1][self.nelec - 1] = 0
+        mo0 = np.stack((self.mf.mo_coeff, self.mf.mo_coeff))
+        mf1 = self._xc_homo_mf(mol1, dft.UKS)
+        E_nm1_x = mf1.energy_tot(mf1.make_rdm1(mo0, occ))
+
+        return E_nm1_x - E_n_x
 
     def get_v_ref_w_homo(self, zII, ints_3c, mo_coeff, nelec, vxnl_ao):
         r"""
