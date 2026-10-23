@@ -167,11 +167,16 @@ class EXXOEP:
         self.vxnl_ao *= -0.5
 
     def build_pmol_and_grid(self):
-        """Builds auxiliary mol and integration grid, shared by get_WII and get_y_and_yII."""
-        self.pmol = gto.M(atom=self.mf.mol.atom, basis=self.oep_basis, spin=self.mf.mol.spin, charge=self.mf.mol.charge)
-        self.pmol.verbose = 0
+        """
+        Builds the integration grid and the integrals y of the OEP basis functions,
+        shared by get_WII and get_y_and_yII. pmol is the OEP-basis mol (same as auxmol),
+        so it has the geometry, units and cart setting of mf.mol.
+        """
+        self.pmol = self.auxmol
         self.grid = dft.gen_grid.Grids(self.pmol)
+        self.grid.verbose = 0
         self.grid.build()
+        self.y = gto.eval_gto(self.pmol, "GTOval", self.grid.coords).T @ self.grid.weights
 
     def get_WII(self):
         r"""
@@ -185,8 +190,7 @@ class EXXOEP:
         eigs, evecs, _ = scipy.linalg.lapack.dsyev(smat)
 
         if self.space_sym:
-            symvec_aux = gto.eval_gto(self.pmol, "GTOval_sph", self.grid.coords)
-            symvec = symvec_aux.T @ self.grid.weights
+            symvec = self.y.copy()
             symvec[abs(symvec) > 1e-10] = 1.0
             eigs[np.abs(evecs.T @ symvec) < 1e-10] = 0.0
             mask = np.abs(eigs) > 1e-10
@@ -202,8 +206,6 @@ class EXXOEP:
         Performs part of the third step of the auxiliary basis set preprocessing.
         See Sections IIB3 in J. Chem. Phys. 155 (2021) 054109.
         """
-        y_aux = gto.eval_gto(self.pmol, "GTOval_sph", self.grid.coords)
-        self.y = y_aux.T @ self.grid.weights
         self.yII = np.matmul(np.transpose(self.WII), self.y)
         self.charge_norm = np.dot(self.yII, self.yII)
 

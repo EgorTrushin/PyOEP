@@ -2,7 +2,7 @@
 
 import numpy as np
 import scipy
-from pyscf import dft, gto
+from pyscf import dft
 
 from .exxoep import EXXOEP
 
@@ -217,8 +217,7 @@ class KSINV(EXXOEP):
         eigs, evecs, _ = scipy.linalg.lapack.dsyev(smat)
 
         if self.space_sym:
-            symvec_aux = gto.eval_gto(self.pmol, "GTOval_sph", self.grid.coords)
-            symvec = symvec_aux.T @ self.grid.weights
+            symvec = self.y.copy()
             symvec[abs(symvec) > 1e-10] = 1.0
             eigs[np.abs(evecs.T @ symvec) < 1e-10] = 0.0
             mask = np.abs(eigs) > 1e-10

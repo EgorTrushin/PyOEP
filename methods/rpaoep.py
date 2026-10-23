@@ -53,12 +53,10 @@ class RPAOEP(EXXOEP):
         self.WII_ri = np.diag(diag) @ evecs @ np.diag(1.0 / np.sqrt(eigs))
 
         # Charge constraint for RI basis (analogous to get_y_and_yII + get_W3_charge)
-        pmol_ri = gto.M(atom=self.mf.mol.atom, basis=self.ri_basis, spin=self.mf.mol.spin, charge=self.mf.mol.charge)
-        pmol_ri.verbose = 0
-        grid_ri = dft.gen_grid.Grids(pmol_ri)
+        grid_ri = dft.gen_grid.Grids(self.auxmol_ri)
+        grid_ri.verbose = 0
         grid_ri.build()
-        y_aux_ri = gto.eval_gto(pmol_ri, "GTOval_sph", grid_ri.coords)
-        y_ri = y_aux_ri.T @ grid_ri.weights
+        y_ri = gto.eval_gto(self.auxmol_ri, "GTOval", grid_ri.coords).T @ grid_ri.weights
         yII_ri = self.WII_ri.T @ y_ri
         charge_norm_ri = np.dot(yII_ri, yII_ri)
 
