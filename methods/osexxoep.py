@@ -2,7 +2,7 @@
 
 import numpy as np
 import scipy
-from pyscf import lib
+from pyscf.scf.diis import CDIIS
 
 from .exxoep import EXXOEP
 
@@ -47,7 +47,7 @@ class OSEXXOEP(EXXOEP):
         if linear_mixing > 0:
             fock_old_a, fock_old_b = None, None
         else:
-            adiis = lib.diis.DIIS()
+            adiis = CDIIS(Corth=self.X_lindep)
 
         e_tot_old = None
 
@@ -146,6 +146,8 @@ class OSEXXOEP(EXXOEP):
             F_a = h1e + self.vj_ao + vref_ao_a + vrest_ao_a
             F_b = h1e + self.vj_ao + vref_ao_b + vrest_ao_b
 
+            S = self.mf.get_ovlp()
+
             if linear_mixing > 0:
                 if fock_old_a is None:
                     fock_old_a = F_a.copy()
@@ -156,19 +158,10 @@ class OSEXXOEP(EXXOEP):
                     fock_old_a = F_a.copy()
                     fock_old_b = F_b.copy()
             else:
-                S = self.mf.get_ovlp()
                 D_a = self.mf.mo_coeff[0][:, : self.nelec[0]] @ self.mf.mo_coeff[0][:, : self.nelec[0]].T
                 D_b = self.mf.mo_coeff[1][:, : self.nelec[1]] @ self.mf.mo_coeff[1][:, : self.nelec[1]].T
-                e_a = F_a @ D_a @ S - S @ D_a @ F_a
-                e_b = F_b @ D_b @ S - S @ D_b @ F_b
-                nao = F_a.shape[0]
-                F_combined = adiis.update(
-                    np.concatenate([F_a.ravel(), F_b.ravel()]), xerr=np.concatenate([e_a.ravel(), e_b.ravel()])
-                )
-                F_a = F_combined[: nao * nao].reshape(nao, nao)
-                F_b = F_combined[nao * nao :].reshape(nao, nao)
+                F_a, F_b = adiis.update(S, np.stack((D_a, D_b)), np.stack((F_a, F_b)))
 
-            S = self.mf.get_ovlp()
             mo_energy, mo_coeff = self.mf._eigh(F_a, S)
             self.mf.mo_energy[0], self.mf.mo_coeff[0] = mo_energy, mo_coeff
             mo_energy, mo_coeff = self.mf._eigh(F_b, S)

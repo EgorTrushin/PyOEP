@@ -108,7 +108,7 @@ class RPAOEP(EXXOEP):
         if linear_mixing > 0:
             fock_old = None
         else:
-            adiis = CDIIS()
+            adiis = CDIIS(Corth=self.X_lindep)
 
         e_tot_old = None
 
@@ -177,6 +177,7 @@ class RPAOEP(EXXOEP):
             # --- Fock matrix: h0 + vJ + vx + vc ---
             h1e = self.mf.get_hcore(self.mf.mol)
             F = h1e + self.vj_ao + self.get_vx_fock(vref_ao + vrest_ao, self.vxnl_ao) + vrest_c_ao
+            S = self.mf.get_ovlp()
 
             if linear_mixing > 0:
                 if fock_old is None:
@@ -185,11 +186,9 @@ class RPAOEP(EXXOEP):
                     F = (1.0 - linear_mixing) * F + linear_mixing * fock_old
                     fock_old = F.copy()
             else:
-                S = self.mf.get_ovlp()
                 D = 2.0 * self.mf.mo_coeff[:, : self.nelec] @ self.mf.mo_coeff[:, : self.nelec].T
                 F = adiis.update(S, D, F)
 
-            S = self.mf.get_ovlp()
             self.mf.mo_energy, self.mf.mo_coeff = self.mf._eigh(F, S)
 
             self.get_energies_and_potentials()

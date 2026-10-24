@@ -4,7 +4,8 @@ from copy import deepcopy
 
 import numpy as np
 import scipy
-from pyscf import df, dft, gto, lib
+from pyscf import df, dft, gto
+from pyscf.scf.diis import CDIIS
 
 
 class EXXOEP:
@@ -78,7 +79,7 @@ class EXXOEP:
         if linear_mixing > 0:
             fock_old = None
         else:
-            adiis = lib.diis.DIIS()
+            adiis = CDIIS(Corth=self.X_lindep)
 
         e_tot_old = None
 
@@ -125,6 +126,7 @@ class EXXOEP:
 
             h1e = self.mf.get_hcore(self.mf.mol)
             F = h1e + self.vj_ao + vref_ao + vrest_ao
+            S = self.mf.get_ovlp()
 
             if linear_mixing > 0:
                 if fock_old is None:
@@ -133,9 +135,9 @@ class EXXOEP:
                     F = (1.0 - linear_mixing) * F + linear_mixing * fock_old
                     fock_old = F.copy()
             else:
-                F = adiis.update(F)
+                D = 2.0 * self.mf.mo_coeff[:, : self.nelec] @ self.mf.mo_coeff[:, : self.nelec].T
+                F = adiis.update(S, D, F)
 
-            S = self.mf.get_ovlp()
             self.mf.mo_energy, self.mf.mo_coeff = self.mf._eigh(F, S)
 
             self.get_energies_and_potentials()
