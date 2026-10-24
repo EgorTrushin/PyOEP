@@ -92,7 +92,17 @@ class RPAOEP(EXXOEP):
         """
         return vx_local_ao
 
-    def run(self, maxit=50, thr_fai_oep=5e-2, thr_fai_ri=1e-8, nw=20, x0=2.5, linear_mixing=-1.0, e_conv_thr=1e-8):
+    def run(
+        self,
+        maxit=50,
+        thr_fai_oep=5e-2,
+        thr_fai_ri=1e-8,
+        nw=20,
+        x0=2.5,
+        linear_mixing=-1.0,
+        e_conv_thr=1e-8,
+        g_conv_thr=None,
+    ):
         r"""
         Performs a self-consistent RPA-OEP calculation.
 
@@ -104,15 +114,20 @@ class RPAOEP(EXXOEP):
             x0: frequency scaling parameter for quadrature
             linear_mixing: if > 0, use linear mixing instead of DIIS
             e_conv_thr: threshold for energy convergence
+            g_conv_thr: threshold for the norm of the orbital gradient |G| (default sqrt(e_conv_thr),
+                        as conv_tol_grad in PySCF); converged when both thresholds are met
         """
         if linear_mixing > 0:
             fock_old = None
         else:
             adiis = CDIIS(Corth=self.X_lindep)
 
+        if g_conv_thr is None:
+            g_conv_thr = np.sqrt(e_conv_thr)
+
         e_tot_old = None
 
-        print("ITER" + " " * 8 + "ENERGY" + " " * 12 + "EDIFF" + " " * 13 + "E_CORR")
+        print(f"{'ITER':4} {'ENERGY':>18}  {'EDIFF':>18}  {'|G|':>10}  {'E_CORR':>14}")
         for current_iter in range(maxit):
             ints_3c = self.mf.mo_coeff.T @ self.ints_3c_ao @ self.mf.mo_coeff
             ints_3c_ri_mo = self.mf.mo_coeff.T @ self.ints_3c_ao_ri @ self.mf.mo_coeff
@@ -177,6 +192,7 @@ class RPAOEP(EXXOEP):
             # --- Fock matrix: h0 + vJ + vx + vc ---
             h1e = self.mf.get_hcore(self.mf.mol)
             F = h1e + self.vj_ao + self.get_vx_fock(vref_ao + vrest_ao, self.vxnl_ao) + vrest_c_ao
+            g_norm = self.get_grad_norm(F)
             S = self.mf.get_ovlp()
 
             if linear_mixing > 0:
@@ -194,12 +210,12 @@ class RPAOEP(EXXOEP):
             self.get_energies_and_potentials()
 
             if e_tot_old is None:
-                print(f"{current_iter:3}  {self.e_tot:18.12f}  {'':18}  {self.E_corr:14.8f}")
+                print(f"{current_iter:3}  {self.e_tot:18.12f}  {'':18}  {g_norm:10.3e}  {self.E_corr:14.8f}")
                 e_tot_old = self.e_tot
             else:
                 ediff = self.e_tot - e_tot_old
-                print(f"{current_iter:3}  {self.e_tot:18.12f}  {ediff:18.12f}  {self.E_corr:14.8f}")
-                if abs(e_tot_old - self.e_tot) < e_conv_thr:
+                print(f"{current_iter:3}  {self.e_tot:18.12f}  {ediff:18.12f}  {g_norm:10.3e}  {self.E_corr:14.8f}")
+                if abs(e_tot_old - self.e_tot) < e_conv_thr and g_norm < g_conv_thr:
                     print("SCF converged")
                     self.converged = True
                     self.vref_oep = vref_oep

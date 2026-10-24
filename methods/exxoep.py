@@ -65,7 +65,7 @@ class EXXOEP:
         e, c = scipy.linalg.eigh(h_orth)
         return e, X @ c
 
-    def run(self, maxit=50, thr_fai_oep=5e-2, linear_mixing=-1.0, e_conv_thr=1e-8):
+    def run(self, maxit=50, thr_fai_oep=5e-2, linear_mixing=-1.0, e_conv_thr=1e-8, g_conv_thr=None):
         r"""
         Performs a self-consistent calculation.
 
@@ -75,15 +75,20 @@ class EXXOEP:
             linear_mixing: if specified larger than 0, linear mixing scheme is used instead of DIIS
                            with given linear_mixing coefficient
             e_conv_thr: threshold for energy convergence
+            g_conv_thr: threshold for the norm of the orbital gradient |G| (default sqrt(e_conv_thr),
+                        as conv_tol_grad in PySCF); converged when both thresholds are met
         """
         if linear_mixing > 0:
             fock_old = None
         else:
             adiis = CDIIS(Corth=self.X_lindep)
 
+        if g_conv_thr is None:
+            g_conv_thr = np.sqrt(e_conv_thr)
+
         e_tot_old = None
 
-        print("ITER" + " " * 8 + "ENERGY" + " " * 15 + "EDIFF")
+        print(f"{'ITER':4} {'ENERGY':>18}  {'EDIFF':>18}  {'|G|':>10}")
         for current_iter in range(maxit):
             ints_3c = self.mf.mo_coeff.T @ self.ints_3c_ao @ self.mf.mo_coeff
             z = None
@@ -126,6 +131,7 @@ class EXXOEP:
 
             h1e = self.mf.get_hcore(self.mf.mol)
             F = h1e + self.vj_ao + vref_ao + vrest_ao
+            g_norm = self.get_grad_norm(F)
             S = self.mf.get_ovlp()
 
             if linear_mixing > 0:
@@ -143,11 +149,11 @@ class EXXOEP:
             self.get_energies_and_potentials()
 
             if e_tot_old is None:
-                print(f"{current_iter:3}  {self.e_tot:18.12f}")
+                print(f"{current_iter:3}  {self.e_tot:18.12f}  {'':18}  {g_norm:10.3e}")
                 e_tot_old = self.e_tot
             else:
-                print(f"{current_iter:3}  {self.e_tot:18.12f}  {self.e_tot - e_tot_old:18.12f}")
-                if abs(e_tot_old - self.e_tot) < e_conv_thr:
+                print(f"{current_iter:3}  {self.e_tot:18.12f}  {self.e_tot - e_tot_old:18.12f}  {g_norm:10.3e}")
+                if abs(e_tot_old - self.e_tot) < e_conv_thr and g_norm < g_conv_thr:
                     print("SCF converged")
                     self.converged = True
                     self.vref_oep = vref_oep
@@ -159,6 +165,14 @@ class EXXOEP:
                 print("SCF was not converged")
                 self.vref_oep = vref_oep
                 self.vrest_oep = vrest_oep
+
+    def get_grad_norm(self, fock):
+        """
+        Norm of the orbital gradient: the occupied-virtual block of the Fock matrix in the basis
+        of the orbitals it was built from, defined as in pyscf.scf.hf.get_grad.
+        """
+        mo_coeff, nocc = self.mf.mo_coeff, self.nelec
+        return np.linalg.norm(2.0 * mo_coeff[:, nocc:].T @ fock @ mo_coeff[:, :nocc])
 
     def get_energies_and_potentials(self):
         """Determines energy contributions and potentials."""
