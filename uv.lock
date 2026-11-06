@@ -1759,15 +1759,15 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "basis-set-exchange", specifier = ">=0.12" },
-    { name = "jupyterlab", specifier = ">=4.6.3" },
-    { name = "matplotlib", specifier = ">=3.11.1" },
-    { name = "numpy", specifier = ">=2.5.2", index = "https://urob.github.io/numpy-mkl" },
+    { name = "jupyterlab", specifier = ">=4.6.6" },
+    { name = "matplotlib", specifier = ">=3.11.2" },
+    { name = "numpy", specifier = ">=2.5.4", index = "https://urob.github.io/numpy-mkl" },
     { name = "psutil", specifier = ">=7.2.2" },
     { name = "pyscf", specifier = ">=2.15.0" },
-    { name = "pytest", specifier = ">=9.1.1" },
-    { name = "ruff", specifier = ">=0.16.5" },
+    { name = "pytest", specifier = ">=9.2.0" },
+    { name = "ruff", specifier = ">=0.17.4" },
     { name = "scipy", specifier = ">=1.18.1", index = "https://urob.github.io/numpy-mkl" },
-    { name = "threadpoolctl", specifier = ">=3.6.0" },
+    { name = "threadpoolctl", specifier = ">=3.8.0" },
 ]
 
 [[package]]

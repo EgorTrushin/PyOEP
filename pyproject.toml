@@ -4,15 +4,15 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "basis-set-exchange>=0.12",
-    "jupyterlab>=4.6.3",
-    "matplotlib>=3.11.1",
-    "numpy>=2.5.2",
+    "jupyterlab>=4.6.6",
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.4",
     "psutil>=7.2.2",
     "pyscf>=2.15.0",
-    "pytest>=9.1.1",
-    "ruff>=0.16.5",
+    "pytest>=9.2.0",
+    "ruff>=0.17.4",
     "scipy>=1.18.1",
-    "threadpoolctl>=3.6.0",
+    "threadpoolctl>=3.8.0",
 ]
 
 [tool.ruff]
