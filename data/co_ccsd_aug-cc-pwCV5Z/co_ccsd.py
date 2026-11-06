@@ -8,8 +8,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import numpy as np
 from pyscf import cc, gto, scf
 
-from utils.relaxed_dm_cc import relaxed_rdm1
-
 ORBITAL_BASIS = "aug-cc-pwCV5Z"
 GEOM = "C 0.000000    0.000000   -0.646514; O 0.000000    0.000000    0.484886"
 
@@ -27,7 +25,9 @@ mf_cc.kernel()
 print(f"CCSD correlation energy:     {mf_cc.e_corr:15.12f}", flush=True)
 print(f"CCSD total energy:         {mf_cc.e_tot:15.12f}", flush=True)
 dm_ccsd_unrelaxed = mf_cc.make_rdm1(ao_repr=True)
-dm_ccsd = relaxed_rdm1(mf_cc, "ccsd")
+mf_grad = mf_cc.Gradients()
+mf_grad.kernel()
+dm_ccsd = mf_grad.rdm1_relaxed
 
 with open("dm.npy", "wb") as f:
     np.save(f, dm_ccsd)
