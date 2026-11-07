@@ -104,8 +104,7 @@ class KSINV(EXXOEP):
             else:
                 W3 = self.get_W3_charge()
 
-            W = self.get_W(W3, ints_3c, self.nelec, thr_fai_oep)
-            W_inv = self.get_inverse_W(W3, ints_3c, self.nelec, thr_fai_oep)
+            W, W_inv = self.get_W_and_inverse_W(W3, ints_3c, self.nelec, thr_fai_oep)
             self.unity_test(W, W_inv)
 
             X0 = 4.0 * self.get_X0(ints_3c, self.mf.mo_energy, self.nelec, W)
@@ -228,19 +227,20 @@ class KSINV(EXXOEP):
 
         self.WII_inv = smh @ inv_W1
 
-    def get_inverse_W(self, W3, ints_3c, nelec, thr_fai_oep):
+    def get_W_and_inverse_W(self, W3, ints_3c, nelec, thr_fai_oep):
         """
-        Determine final inverse transformation matrix,
+        Determine the final transformation matrix W and its inverse,
         see Section IIC2 in J. Chem. Phys. 155 (2021) 054109.
+
+        Both are built from one eigendecomposition. Separate eigensolver calls do not
+        guarantee W_inv @ W = 1: where eigenvalues are degenerate, as they are for atoms,
+        the eigenvectors within a degenerate subspace are arbitrary, and two calls can
+        return different ones (seen on GitHub Actions runners with MKL).
         """
-        WIII_inv = W3.T @ self.WII_inv
-        trans_mat_constraint = self.WII @ W3
-        dmat = trans_mat_constraint.T @ ints_3c[:, nelec:, :nelec].reshape(self.naux, (self.nmo - nelec) * nelec)
-        amat = dmat @ dmat.T
-        eigs, evecs = scipy.linalg.eigh(amat)
-        nsing = (eigs < thr_fai_oep).sum()
-        trans_mat = evecs[:, nsing:].T @ WIII_inv
-        return trans_mat
+        trans_mat_constraint, evecs = self.get_W_eigvecs(W3, ints_3c, nelec, thr_fai_oep)
+        W = trans_mat_constraint @ evecs
+        W_inv = evecs.T @ (W3.T @ self.WII_inv)
+        return W, W_inv
 
     def unity_test(self, W, W_inv):
         """Check whether W_inv is inverse of W."""

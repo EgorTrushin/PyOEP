@@ -157,8 +157,10 @@ class OSKSINV(KSINV):
                     vref_ao_a = np.einsum("ijk,k->ij", self.ints_3c_ao_t, vref_oep_a[:])
                     vref_ao_b = vref_ao_a.copy()
                     W3_a = self.get_W3_charge_and_homo(zII_a)
-                    W_a = W_b = self.get_W_spin_sym(W3_a, ints_3c_a, ints_3c_b, self.nelec, thr_fai_oep)
-                    W_inv_a = W_inv_b = self.get_inverse_W_spin_sym(W3_a, ints_3c_a, ints_3c_b, self.nelec, thr_fai_oep)
+                    W_a, W_inv_a = self.get_W_and_inverse_W_spin_sym(
+                        W3_a, ints_3c_a, ints_3c_b, self.nelec, thr_fai_oep
+                    )
+                    W_b, W_inv_b = W_a, W_inv_a
                 else:
                     vref_oep_a = self.get_v_ref_w_homo(
                         u_ref_a, vj_ao_ref, zII_a, self.mf.mo_coeff[0], self.nelec[0], self.ip[0]
@@ -170,20 +172,16 @@ class OSKSINV(KSINV):
                     )
                     vref_ao_b = np.einsum("ijk,k->ij", self.ints_3c_ao_t, vref_oep_b[:])
                     W3_b = self.get_W3_charge_and_homo(zII_b)
-                    W_a = self.get_W(W3_a, ints_3c_a, self.nelec[0], thr_fai_oep)
-                    W_b = self.get_W(W3_b, ints_3c_b, self.nelec[1], thr_fai_oep)
-                    W_inv_a = self.get_inverse_W(W3_a, ints_3c_a, self.nelec[0], thr_fai_oep)
-                    W_inv_b = self.get_inverse_W(W3_b, ints_3c_b, self.nelec[1], thr_fai_oep)
+                    W_a, W_inv_a = self.get_W_and_inverse_W(W3_a, ints_3c_a, self.nelec[0], thr_fai_oep)
+                    W_b, W_inv_b = self.get_W_and_inverse_W(W3_b, ints_3c_b, self.nelec[1], thr_fai_oep)
             else:
                 W3 = self.get_W3_charge()
                 if self.spin_sym:
-                    W_a = W_b = self.get_W_spin_sym(W3, ints_3c_a, ints_3c_b, self.nelec, thr_fai_oep)
-                    W_inv_a = W_inv_b = self.get_inverse_W_spin_sym(W3, ints_3c_a, ints_3c_b, self.nelec, thr_fai_oep)
+                    W_a, W_inv_a = self.get_W_and_inverse_W_spin_sym(W3, ints_3c_a, ints_3c_b, self.nelec, thr_fai_oep)
+                    W_b, W_inv_b = W_a, W_inv_a
                 else:
-                    W_a = self.get_W(W3, ints_3c_a, self.nelec[0], thr_fai_oep)
-                    W_b = self.get_W(W3, ints_3c_b, self.nelec[1], thr_fai_oep)
-                    W_inv_a = self.get_inverse_W(W3, ints_3c_a, self.nelec[0], thr_fai_oep)
-                    W_inv_b = self.get_inverse_W(W3, ints_3c_b, self.nelec[1], thr_fai_oep)
+                    W_a, W_inv_a = self.get_W_and_inverse_W(W3, ints_3c_a, self.nelec[0], thr_fai_oep)
+                    W_b, W_inv_b = self.get_W_and_inverse_W(W3, ints_3c_b, self.nelec[1], thr_fai_oep)
 
             self.unity_test(W_a, W_inv_a)
             self.unity_test(W_b, W_inv_b)
@@ -352,28 +350,16 @@ class OSKSINV(KSINV):
                 self.vc_oep_a = vref_oep_a + vrest_oep_a - self.vx_oep_a
                 self.vc_oep_b = vref_oep_b + vrest_oep_b - self.vx_oep_b
 
-    def get_inverse_W_spin_sym(self, W3, ints_3c_a, ints_3c_b, nelec, thr_fai_oep):
+    def get_W_and_inverse_W_spin_sym(self, W3, ints_3c_a, ints_3c_b, nelec, thr_fai_oep):
         r"""
-        Determine final inverse transformation matrix for spin-symmetrized case.
+        Determine the final transformation matrix W and its inverse for the spin-symmetrized case,
+        from one eigendecomposition (see KSINV.get_W_and_inverse_W for why).
         See Sections IIB in J. Chem. Phys. 159, 244109 (2023)
         """
-        WIII_inv = W3.T @ self.WII_inv
-        trans_mat_constraint = self.WII @ W3
-        dmat_a = trans_mat_constraint.T @ ints_3c_a[:, nelec[0] :, : nelec[0]].reshape(
-            self.naux, (self.nmo - nelec[0]) * nelec[0]
-        )
-        amat_a = dmat_a @ dmat_a.T
-        dmat_b = trans_mat_constraint.T @ ints_3c_b[:, nelec[1] :, : nelec[1]].reshape(
-            self.naux, (self.nmo - nelec[1]) * nelec[1]
-        )
-        amat_b = dmat_b @ dmat_b.T
-        amat = 0.5 * (amat_a + amat_b)
-        aux = scipy.linalg.lapack.dsyev(amat)
-        eigs = aux[0]
-        evecs = aux[1]
-        nsing = (eigs < thr_fai_oep).sum()
-        trans_mat = evecs[:, nsing:].T @ WIII_inv
-        return trans_mat
+        trans_mat_constraint, evecs = self.get_W_eigvecs_spin_sym(W3, ints_3c_a, ints_3c_b, nelec, thr_fai_oep)
+        W = trans_mat_constraint @ evecs
+        W_inv = evecs.T @ (W3.T @ self.WII_inv)
+        return W, W_inv
 
     def potentials_test(self, vrest_oep, vref_oep, vrest_ao, vref_ao, vj_ao, mo_coeff, nelec, z, ip=None):
         """Performs consistency checks for potentials.

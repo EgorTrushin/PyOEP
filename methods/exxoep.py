@@ -302,9 +302,10 @@ class EXXOEP:
         vref_oep = self.WII @ vrefII
         return vref_oep
 
-    def get_W(self, W3, ints_3c, nelec, thr_fai_oep):
+    def get_W_eigvecs(self, W3, ints_3c, nelec, thr_fai_oep):
         r"""
-        Performs the last step of the auxiliary basis set preprocessing and returns the final transformation matrix.
+        Eigendecomposition behind get_W: returns WII @ W3 and the eigenvectors of the
+        occupied-virtual coupling matrix whose eigenvalues are at least thr_fai_oep.
         See Sections IIB5 in J. Chem. Phys. 155 (2021) 054109.
         """
         trans_mat_constraint = self.WII @ W3
@@ -312,8 +313,15 @@ class EXXOEP:
         amat = dmat @ dmat.T
         eigs, evecs = scipy.linalg.eigh(amat)
         nsing = (eigs < thr_fai_oep).sum()
-        trans_mat = trans_mat_constraint @ evecs[:, nsing:]
-        return trans_mat
+        return trans_mat_constraint, evecs[:, nsing:]
+
+    def get_W(self, W3, ints_3c, nelec, thr_fai_oep):
+        r"""
+        Performs the last step of the auxiliary basis set preprocessing and returns the final transformation matrix.
+        See Sections IIB5 in J. Chem. Phys. 155 (2021) 054109.
+        """
+        trans_mat_constraint, evecs = self.get_W_eigvecs(W3, ints_3c, nelec, thr_fai_oep)
+        return trans_mat_constraint @ evecs
 
     def get_W_spin_sym(self, W3, ints_3c_a, ints_3c_b, nelec, thr_fai_oep):
         r"""
@@ -328,6 +336,15 @@ class EXXOEP:
 
         See Section IIB in J. Chem. Phys. 159, 244109 (2023).
         """
+        trans_mat_constraint, evecs = self.get_W_eigvecs_spin_sym(W3, ints_3c_a, ints_3c_b, nelec, thr_fai_oep)
+        return trans_mat_constraint @ evecs
+
+    def get_W_eigvecs_spin_sym(self, W3, ints_3c_a, ints_3c_b, nelec, thr_fai_oep):
+        r"""
+        Eigendecomposition behind get_W_spin_sym: returns WII @ W3 and the eigenvectors
+        of the spin-averaged occupied-virtual coupling matrix whose eigenvalues are at
+        least thr_fai_oep.
+        """
         trans_mat_constraint = self.WII @ W3
         dmat_a = trans_mat_constraint.T @ ints_3c_a[:, nelec[0] :, : nelec[0]].reshape(
             self.naux, (self.nmo - nelec[0]) * nelec[0]
@@ -340,8 +357,7 @@ class EXXOEP:
         amat = 0.5 * (amat_a + amat_b)
         eigs, evecs, _ = scipy.linalg.lapack.dsyev(amat)
         nsing = (eigs < thr_fai_oep).sum()
-        trans_mat = trans_mat_constraint @ evecs[:, nsing:]
-        return trans_mat
+        return trans_mat_constraint, evecs[:, nsing:]
 
     def get_e_ov(self, mo_energy, nelec):
         """Returns inverse occupied-virtual energy differences (virtual, occupied)."""
