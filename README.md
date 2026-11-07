@@ -1,6 +1,9 @@
 # PyOEP
 
 [![tests](https://github.com/EgorTrushin/PyOEP/actions/workflows/tests.yml/badge.svg)](https://github.com/EgorTrushin/PyOEP/actions/workflows/tests.yml)
+[![Python](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/github/license/EgorTrushin/PyOEP)](LICENSE)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
 Gaussian basis set optimized effective potential methods which are implemented by means of PySCF.
 
