@@ -1,5 +1,7 @@
 # PyOEP
 
+[![tests](https://github.com/EgorTrushin/PyOEP/actions/workflows/tests.yml/badge.svg)](https://github.com/EgorTrushin/PyOEP/actions/workflows/tests.yml)
+
 Gaussian basis set optimized effective potential methods which are implemented by means of PySCF.
 
 - Exact-exchange optimized effective potential method for closed- and open-shell systems
